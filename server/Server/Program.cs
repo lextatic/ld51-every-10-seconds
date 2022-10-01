@@ -127,7 +127,13 @@ public class Program
 
 			transporter.DisconnectHandle += (sender, peer) =>
 			{
-				if (gameState.EntityOwnerMap.TryRemove(peer, out var gameID))
+				if (gameState.EntityOwnerMap.TryRemove(peer, out var avatarID))
+				{
+					var avatar = gameState.Get<BaseEntity>(avatarID);
+					gameState.Remove(avatar);
+				}
+
+				if (gameState.OwnerToGameMap.TryRemove(peer, out var gameID))
 				{
 					var game = gameState.Get<BaseEntity>(gameID);
 					gameState.Remove(game);
