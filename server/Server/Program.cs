@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 public class Program
 {
@@ -64,14 +65,9 @@ public class Program
 			var transporter = scope.Resolve<ENetTransporterServer>();
 			var gameState = scope.Resolve<GameState>();
 
-			//TypeManager.TypeManager.RegisterClass<RequestCreateAvatarMessage>();
-			//TypeManager.TypeManager.RegisterClass<RequestBallColorMessage>();
-			TypeManager.TypeManager.RegisterClass<RequestGameStateMessage>();
+			TypeManager.TypeManager.RegisterClass<RequestCreateAvatarMessage>();
 			TypeManager.TypeManager.RegisterClass<MarkMessage>();
 			TypeManager.TypeManager.RegisterClass<PlayMessage>();
-			//TypeManager.TypeManager.RegisterClass<UpdateOwnerTransformMessage>();
-			//TypeManager.TypeManager.RegisterClass<BeginAttackMessage>();
-			//TypeManager.TypeManager.RegisterClass<AttackMessage>();
 
 			// TODO: Improve generate entity ID
 			var rand = new Random(DateTime.Now.Millisecond);
@@ -93,20 +89,39 @@ public class Program
 
 			transporter.ConnectHandle += (sender, peer) =>
 			{
-				var newID = rand.Next();
+				//var avatarID = rand.Next();
+				//var avatar = new Avatar
+				//{
+				//	ID = avatarID,
+				//	Name = 
+				//}
 
-				var minesweeperGame = new MinesweeperGame(10, 10)
+				//var minesweeperGame = new MinesweeperGame(10, 10)
+				//{
+				//	ID = newID
+				//};
+
+				//gameState.Add(minesweeperGame);
+
+				//gameState.TryAssignOwner(newID, peer);
+
+				//transporter.Send(new OwnerMessage
+				//{
+				//	ID = newID
+				//}, peer);
+				var avatars = new List<Avatar>();
+
+				foreach (var entity in gameState.Entities)
 				{
-					Id = newID
-				};
+					if (entity is Avatar avatar)
+					{
+						avatars.Add((Avatar)entity);
+					}
+				}
 
-				gameState.Add(minesweeperGame);
-
-				gameState.TryAssignOwner(newID, peer);
-
-				transporter.Send(new OwnerMessage
+				transporter.Send(new GameStateMessage
 				{
-					ID = newID
+					Avatars = avatars
 				}, peer);
 			};
 
@@ -114,31 +129,31 @@ public class Program
 			{
 				if (gameState.EntityOwnerMap.TryRemove(peer, out var gameID))
 				{
-					var avatar = gameState.Get<BaseEntity>(gameID);
-					gameState.Remove(avatar);
+					var game = gameState.Get<BaseEntity>(gameID);
+					gameState.Remove(game);
 				}
 			};
 
 			gameState.OnAdd += (sender, entity) =>
 			{
-				//if (entity.GetType() == typeof(Avatar))
-				//{
-				//	var avatar = (Avatar)entity;
-				//	transporter.Send(new RequestCreateAvatarMessage
-				//	{
-				//		ID = avatar.Id,
-				//		Health = avatar.Health,
-				//		Position = avatar.Position
-				//	});
-				//}
+				if (entity.GetType() == typeof(Avatar))
+				{
+					var avatar = (Avatar)entity;
+					transporter.Send(new CreateAvatarMessage
+					{
+						ID = avatar.ID,
+						Name = avatar.Name,
+						Score = avatar.Score
+					});
+				}
 			};
 
 			gameState.OnRemove += (sender, entity) =>
 			{
-				//transporter.Send(new RequestDestroyAvatarMessage
-				//{
-				//	ID = entity.Id,
-				//});
+				transporter.Send(new DestroyAvatarMessage
+				{
+					ID = entity.ID,
+				});
 			};
 
 			transporter.Start(new ENetTransporterConfigure
@@ -146,6 +161,10 @@ public class Program
 				Port = 7070
 			});
 
+
+			MainAsync().GetAwaiter().GetResult();
+
+			// not being called
 			SpinWait.SpinUntil(() => MenuLoop(gameState, statistics));
 
 			transporter.Stop();
@@ -154,6 +173,15 @@ public class Program
 		Console.WriteLine("Stopping...");
 
 		ENet.Library.Deinitialize();
+	}
+
+	private static async Task MainAsync()
+	{
+		var timer = new PeriodicTimer(TimeSpan.FromSeconds(10));
+		while (await timer.WaitForNextTickAsync())
+		{
+			Console.WriteLine("10 seconds...");
+		}
 	}
 
 	static bool MenuLoop(BaseGameState gameState, ServerStatistics statistics)

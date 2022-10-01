@@ -1,21 +1,24 @@
 ﻿using GameBase;
 using GameEntities.Entities;
 using System;
-using System.Collections.Generic;
 
 namespace GameEntities.Messages
 {
 	[Serializable]
-	public struct GameStateMessage : IBaseMessage
+	public struct CreateAvatarMessage : IBaseMessage
 	{
-		public List<Avatar> Avatars;
+		public long ID;
+		public string Name;
+		public uint Score;
 
 		public void Execute(IBasePeer sender, BaseTransporter transporter, BaseGameState gameState, BaseEventManager eventManager)
 		{
-			foreach (var avatar in Avatars)
+			gameState.Add(new Avatar
 			{
-				gameState.Add(avatar);
-			}
+				Name = Name,
+				ID = ID,
+				Score = 0
+			});
 		}
 	}
 }

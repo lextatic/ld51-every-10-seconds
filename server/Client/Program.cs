@@ -40,11 +40,8 @@ public class Program
 			TypeManager.TypeManager.RegisterClass<GameUpdateMessage>();
 			TypeManager.TypeManager.RegisterClass<GameStateMessage>();
 			TypeManager.TypeManager.RegisterClass<OwnerMessage>();
-			//TypeManager.TypeManager.RegisterClass<RequestCreateAvatarMessage>();
-			//TypeManager.TypeManager.RegisterClass<RequestDestroyAvatarMessage>();
-			//TypeManager.TypeManager.RegisterClass<UpdateProxyTransformMessage>();
-			//TypeManager.TypeManager.RegisterClass<ProxyBeginAttackMessage>();
-			//TypeManager.TypeManager.RegisterClass<ProxyAttackMessage>();
+			TypeManager.TypeManager.RegisterClass<CreateAvatarMessage>();
+			TypeManager.TypeManager.RegisterClass<DestroyAvatarMessage>();
 
 			transporter.MessageReceived += (sender, e) =>
 			{
@@ -53,7 +50,10 @@ public class Program
 
 			transporter.ConnectHandle += (sender, e) =>
 			{
-				transporter.Send(new RequestGameStateMessage());
+				transporter.Send(new RequestCreateAvatarMessage
+				{
+					Name = "Lex"
+				});
 			};
 
 			transporter.Start(new ENetTransporterConfigure

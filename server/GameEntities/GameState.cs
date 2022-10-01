@@ -36,16 +36,16 @@ namespace GameEntities
 			// Problema original - Ao connectar um gameClient no server, o server:
 			//  - criar um avatar é instanciado => envia mensagem de create avatar
 			//  - envia o gameState para o client
-			if (!_entities.TryGetValue(entity.Id, out var _))
+			if (!_entities.TryGetValue(entity.ID, out var _))
 			{
-				_entities[entity.Id] = entity;
-				OnAdd?.Invoke(this, _entities[entity.Id]);
+				_entities[entity.ID] = entity;
+				OnAdd?.Invoke(this, _entities[entity.ID]);
 			}
 		}
 
 		public override void Remove(BaseEntity entity)
 		{
-			if (_entities.TryRemove(entity.Id, out var result))
+			if (_entities.TryRemove(entity.ID, out var result))
 			{
 				OnRemove?.Invoke(this, result);
 			}
@@ -91,11 +91,11 @@ namespace GameEntities
 			builder.AppendLine("\nEntities Data:");
 			foreach (var kv in _entities)
 			{
-				builder.Append($"{kv.Value.GetType()} 0x{kv.Value.Id:x16} ");
+				builder.Append($"{kv.Value.GetType()} 0x{kv.Value.ID:x16} ");
 
 				if (_myEntities.Count > 0)
 				{
-					builder.Append($"Owner={_myEntities.Contains(kv.Value.Id)} ");
+					builder.Append($"Owner={_myEntities.Contains(kv.Value.ID)} ");
 				}
 
 				if (kv.Value.GetType() == typeof(MinesweeperGame))

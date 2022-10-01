@@ -5,17 +5,17 @@ using System;
 namespace GameEntities.Messages
 {
 	[Serializable]
-	public struct MarkMessage : IBaseMessage
+	public struct PlayMessage : IBaseMessage
 	{
 		public long GameId;
 		public int Index;
 
 		public void Execute(IBasePeer sender, BaseTransporter transporter, BaseGameState gameState, BaseEventManager eventManager)
 		{
-			eventManager.Dispatch("MarkMessage", this);
+			eventManager.Dispatch("PlayMessage", this);
 			var targetGame = gameState.Get<MinesweeperGame>(GameId);
 
-			targetGame.Mark(Index);
+			targetGame.Play(Index);
 
 			transporter.Send(new GameUpdateMessage
 			{

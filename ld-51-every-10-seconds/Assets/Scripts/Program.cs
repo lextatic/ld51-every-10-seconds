@@ -66,7 +66,8 @@ public class Program : MonoBehaviour
 
 		_transporter.ConnectHandle += (sender, e) =>
 		{
-			_transporter.Send(new RequestGameStateMessage());
+			// Enviar nickname
+			//_transporter.Send(new RequestGameStateMessage());
 		};
 
 		// Escutando mensagens chegando
