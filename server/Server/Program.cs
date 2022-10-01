@@ -200,9 +200,14 @@ public class Program
 	{
 		var rand = new Random(DateTime.Now.Millisecond);
 
-		foreach (var peerID in gameState.EntityOwnerMap.Keys)
+		IBasePeer? firstPeer = null;
+		IBasePeer? previousPeer = null;
+		long firstGameID = 0;
+		long previousGameID = 0;
+
+		foreach (var peer in gameState.EntityOwnerMap.Keys)
 		{
-			if (!gameState.OwnerToGameMap.ContainsKey(peerID))
+			if (!gameState.OwnerToGameMap.ContainsKey(peer))
 			{
 				var newID = rand.Next();
 
@@ -211,15 +216,49 @@ public class Program
 					ID = newID
 				};
 
-				gameState.OwnerToGameMap[peerID] = newGame.ID;
+				gameState.OwnerToGameMap[peer] = newGame.ID;
 				gameState.Add(newGame);
 
 				transporter.Send(new GameUpdateMessage
 				{
 					GameID = newID,
 					Values = newGame.PlayerCells
-				}, peerID);
+				}, peer);
 			}
+			else
+			{
+				var auxGameID = gameState.OwnerToGameMap[peer];
+
+				if (firstPeer == null)
+				{
+					firstPeer = peer;
+					firstGameID = auxGameID;
+				}
+				else
+				{
+					gameState.OwnerToGameMap[peer] = previousGameID;
+
+					transporter.Send(new GameUpdateMessage
+					{
+						GameID = previousGameID,
+						Values = gameState.Get<MinesweeperGame>(previousGameID).PlayerCells
+					}, peer);
+				}
+
+				previousPeer = peer;
+				previousGameID = auxGameID;
+			}
+		}
+
+		if (firstPeer != null)
+		{
+			gameState.OwnerToGameMap[firstPeer] = previousGameID;
+
+			transporter.Send(new GameUpdateMessage
+			{
+				GameID = previousGameID,
+				Values = gameState.Get<MinesweeperGame>(previousGameID).PlayerCells
+			}, firstPeer);
 		}
 	}
 
