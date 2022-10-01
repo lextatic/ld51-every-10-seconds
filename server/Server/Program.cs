@@ -119,7 +119,7 @@ public class Program
 					}
 				}
 
-				transporter.Send(new GameStateMessage
+				transporter.Send(new AvatarStateMessage
 				{
 					Avatars = avatars
 				}, peer);
@@ -136,9 +136,8 @@ public class Program
 
 			gameState.OnAdd += (sender, entity) =>
 			{
-				if (entity.GetType() == typeof(Avatar))
+				if (entity is Avatar avatar)
 				{
-					var avatar = (Avatar)entity;
 					transporter.Send(new CreateAvatarMessage
 					{
 						ID = avatar.ID,
@@ -150,10 +149,13 @@ public class Program
 
 			gameState.OnRemove += (sender, entity) =>
 			{
-				transporter.Send(new DestroyAvatarMessage
+				if (entity is Avatar)
 				{
-					ID = entity.ID,
-				});
+					transporter.Send(new DestroyAvatarMessage
+					{
+						ID = entity.ID,
+					});
+				}
 			};
 
 			transporter.Start(new ENetTransporterConfigure
@@ -162,7 +164,7 @@ public class Program
 			});
 
 
-			MainAsync().GetAwaiter().GetResult();
+			MainAsync(gameState, statistics, transporter).GetAwaiter().GetResult();
 
 			// not being called
 			SpinWait.SpinUntil(() => MenuLoop(gameState, statistics));
@@ -175,18 +177,49 @@ public class Program
 		ENet.Library.Deinitialize();
 	}
 
-	private static async Task MainAsync()
+	private static async Task MainAsync(GameState gameState, ServerStatistics statistics, ENetTransporterServer transporter)
 	{
 		var timer = new PeriodicTimer(TimeSpan.FromSeconds(10));
 		while (await timer.WaitForNextTickAsync())
 		{
 			Console.WriteLine("10 seconds...");
+
+			CreateNewGames(gameState, transporter);
+
+			DumpGameState(statistics, gameState);
+		}
+	}
+
+	private static void CreateNewGames(GameState gameState, ENetTransporterServer transporter)
+	{
+		var rand = new Random(DateTime.Now.Millisecond);
+
+		foreach (var peerID in gameState.EntityOwnerMap.Keys)
+		{
+			if (!gameState.OwnerToGameMap.ContainsKey(peerID))
+			{
+				var newID = rand.Next();
+
+				var newGame = new MinesweeperGame(10, 10)
+				{
+					ID = newID
+				};
+
+				gameState.OwnerToGameMap[peerID] = newGame.ID;
+				gameState.Add(newGame);
+
+				transporter.Send(new GameUpdateMessage
+				{
+					GameID = newID,
+					Values = newGame.PlayerCells
+				}, peerID);
+			}
 		}
 	}
 
 	static bool MenuLoop(BaseGameState gameState, ServerStatistics statistics)
 	{
-		DumpBallsState(statistics, gameState);
+		DumpGameState(statistics, gameState);
 
 		var keyInfo = Console.ReadKey(true);
 
@@ -205,7 +238,7 @@ public class Program
 		}
 	}
 
-	static void DumpBallsState(ServerStatistics statistics, BaseGameState gameState)
+	static void DumpGameState(ServerStatistics statistics, BaseGameState gameState)
 	{
 		Console.ForegroundColor = ConsoleColor.Yellow;
 		Console.WriteLine($"\n{statistics}");

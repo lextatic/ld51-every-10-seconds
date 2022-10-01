@@ -14,15 +14,16 @@ namespace GameEntities
 
 		public override ICollection<BaseEntity> Entities => _entities.Values;
 
-		// TODO: server gameMemory
-		private readonly ConcurrentDictionary<IBasePeer, long> _entityOwnerMap = new ConcurrentDictionary<IBasePeer, long>();
-		public ConcurrentDictionary<IBasePeer, long> EntityOwnerMap { get => _entityOwnerMap; }
+		public ConcurrentDictionary<IBasePeer, long> EntityOwnerMap { get; } = new ConcurrentDictionary<IBasePeer, long>();
 
+		public ConcurrentDictionary<IBasePeer, long> OwnerToGameMap { get; } = new ConcurrentDictionary<IBasePeer, long>();
 
 		// TODO: client gameMemory
 		private readonly List<long> _myEntities = new List<long>();
 
 		public override ICollection<long> MyEntities => (ICollection<long>)_myEntities;
+
+		public MinesweeperGame MyGame = new MinesweeperGame(10, 10);
 
 		public event EventHandler<BaseEntity> OnAdd;
 
@@ -77,7 +78,7 @@ namespace GameEntities
 			}
 			else
 			{
-				var result = _entityOwnerMap.TryAdd(owner, entityID);
+				var result = EntityOwnerMap.TryAdd(owner, entityID);
 				OnAssignOwner?.Invoke(this, new AssignOwnerEventArgs(owner, entityID));
 				return result;
 			}
@@ -109,10 +110,10 @@ namespace GameEntities
 				builder.AppendLine();
 			}
 
-			if (!_entityOwnerMap.IsEmpty)
+			if (!EntityOwnerMap.IsEmpty)
 			{
 				builder.AppendLine("\nOwnerMap");
-				foreach (var kv in _entityOwnerMap)
+				foreach (var kv in EntityOwnerMap)
 				{
 					builder.AppendLine($"BasePeer={kv.Key} Entity={kv.Value}");
 				}

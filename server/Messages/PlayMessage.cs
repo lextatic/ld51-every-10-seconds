@@ -19,9 +19,9 @@ namespace GameEntities.Messages
 
 			transporter.Send(new GameUpdateMessage
 			{
-				GameId = GameId,
+				GameID = GameId,
 				Values = targetGame.PlayerCells
-			});
+			}, sender);
 		}
 	}
 }

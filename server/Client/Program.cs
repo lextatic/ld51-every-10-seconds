@@ -5,7 +5,6 @@ using GameBase;
 using GameEntities;
 using GameEntities.Messages;
 using System;
-using System.Linq;
 using System.Threading;
 
 public class Program
@@ -27,6 +26,7 @@ public class Program
 			.As<BaseEventManager>();
 
 		builder.RegisterType<GameState>()
+			.AsSelf()
 			.As<BaseGameState>();
 
 		var container = builder.Build();
@@ -34,11 +34,11 @@ public class Program
 		using (var scope = container.BeginLifetimeScope())
 		{
 			var transporter = scope.Resolve<ENetTransporterClient>();
-			var gameState = scope.Resolve<BaseGameState>();
+			var gameState = scope.Resolve<GameState>();
 			var eventManager = scope.Resolve<BaseEventManager>();
 
 			TypeManager.TypeManager.RegisterClass<GameUpdateMessage>();
-			TypeManager.TypeManager.RegisterClass<GameStateMessage>();
+			TypeManager.TypeManager.RegisterClass<AvatarStateMessage>();
 			TypeManager.TypeManager.RegisterClass<OwnerMessage>();
 			TypeManager.TypeManager.RegisterClass<CreateAvatarMessage>();
 			TypeManager.TypeManager.RegisterClass<DestroyAvatarMessage>();
@@ -72,7 +72,7 @@ public class Program
 		ENet.Library.Deinitialize();
 	}
 
-	static bool MenuLoop(BaseGameState gameState, BaseTransporter transporter)
+	static bool MenuLoop(GameState gameState, BaseTransporter transporter)
 	{
 		DumpBallsState(gameState);
 
@@ -84,19 +84,19 @@ public class Program
 				Console.ForegroundColor = ConsoleColor.Green;
 				Console.WriteLine("Mark 0");
 				Console.ResetColor();
-				transporter.Send(new MarkMessage { GameId = gameState.MyEntities.ElementAt(0), Index = 0 });
+				transporter.Send(new MarkMessage { GameID = gameState.MyGame.ID, Index = 0 });
 				return false;
 			case ConsoleKey.D2:
 				Console.ForegroundColor = ConsoleColor.Green;
 				Console.WriteLine("Play 50");
 				Console.ResetColor();
-				transporter.Send(new PlayMessage { GameId = gameState.MyEntities.ElementAt(0), Index = 50 });
+				transporter.Send(new PlayMessage { GameId = gameState.MyGame.ID, Index = 50 });
 				return false;
 			case ConsoleKey.D3:
 				Console.ForegroundColor = ConsoleColor.Green;
 				Console.WriteLine("Mark 99");
 				Console.ResetColor();
-				transporter.Send(new MarkMessage { GameId = gameState.MyEntities.ElementAt(0), Index = 99 });
+				transporter.Send(new MarkMessage { GameID = gameState.MyGame.ID, Index = 99 });
 				return false;
 			case ConsoleKey.C:
 				Console.ForegroundColor = ConsoleColor.Magenta;

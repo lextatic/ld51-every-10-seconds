@@ -1,5 +1,4 @@
 ﻿using GameBase;
-using GameEntities.Entities;
 using System;
 
 namespace GameEntities.Messages
@@ -7,17 +6,19 @@ namespace GameEntities.Messages
 	[Serializable]
 	public struct GameUpdateMessage : IBaseMessage
 	{
-		public long GameId;
+		public long GameID;
 		public sbyte[] Values;
 
 		public void Execute(IBasePeer sender, BaseTransporter transporter, BaseGameState gameState, BaseEventManager eventManager)
 		{
 			eventManager.Dispatch("GameUpdateMessage", this);
 
-			var target = gameState.Get<MinesweeperGame>(GameId);
-			target.PlayerCells = Values;
+			var clientGameState = (GameState)gameState;
 
-			Console.WriteLine(target.ToStringPlayer());
+			clientGameState.MyGame.ID = GameID;
+			clientGameState.MyGame.PlayerCells = Values;
+
+			Console.WriteLine(clientGameState.MyGame.ToStringPlayer());
 		}
 	}
 }

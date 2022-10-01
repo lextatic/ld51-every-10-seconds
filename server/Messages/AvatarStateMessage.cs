@@ -6,7 +6,7 @@ using System.Collections.Generic;
 namespace GameEntities.Messages
 {
 	[Serializable]
-	public struct GameStateMessage : IBaseMessage
+	public struct AvatarStateMessage : IBaseMessage
 	{
 		public List<Avatar> Avatars;
 
