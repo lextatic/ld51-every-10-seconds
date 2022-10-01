@@ -1,3 +1,5 @@
+using GameEntities.Entities;
+using System;
 using UnityEngine;
 
 public class GameView : MonoBehaviour
@@ -6,15 +8,14 @@ public class GameView : MonoBehaviour
 
 	private CellView[] _cells;
 
-	private Field _field;
+	public event Action<int> OnPlayClick;
+	public event Action<int> OnMarkClick;
 
-	void Start()
+	public void Initialize(MinesweeperGame minesweeperGame)
 	{
-		_field = new Field(10, 10);
+		_cells = new CellView[minesweeperGame.PlayerCells.Length];
 
-		_cells = new CellView[_field.CellsCount];
-
-		for (int i = 0; i < _field.CellsCount; i++)
+		for (int i = 0; i < minesweeperGame.PlayerCells.Length; i++)
 		{
 			var newCellView = Instantiate(CellViewPrefab);
 			newCellView.transform.SetParent(transform, false);
@@ -27,40 +28,34 @@ public class GameView : MonoBehaviour
 			_cells[i] = newCellView;
 		}
 
-
-		_field.InitializeField(50, 10);
-		//		field.PrintMatrix();
-
-		RefreshMatrixView();
+		RefreshMatrixView(minesweeperGame);
 	}
 
 	private void CellView_OnMarkClick(int index)
 	{
-		_field.Mark(index);
-		RefreshMatrixView();
+		OnMarkClick.Invoke(index);
 	}
 
 	private void CellView_OnPlayClick(int index)
 	{
-		_field.Play(index);
-		RefreshMatrixView();
+		OnPlayClick.Invoke(index);
 	}
 
-	private void RefreshMatrixView()
+	public void RefreshMatrixView(MinesweeperGame minesweeperGame)
 	{
-		for (int i = 0; i < _field.CellsCount; i++)
+		for (int i = 0; i < minesweeperGame.PlayerCells.Length; i++)
 		{
-			if (_field.PlayerCells[i] == -2)
+			if (minesweeperGame.PlayerCells[i] == -2)
 			{
 				_cells[i].UpdateText("");
 			}
-			else if (_field.PlayerCells[i] == -1)
+			else if (minesweeperGame.PlayerCells[i] == -1)
 			{
 				_cells[i].UpdateText("*");
 			}
 			else
 			{
-				_cells[i].UpdateText(_field.PlayerCells[i].ToString());
+				_cells[i].UpdateText(minesweeperGame.PlayerCells[i].ToString());
 			}
 		}
 	}

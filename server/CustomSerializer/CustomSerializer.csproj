@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net5.0;netstandard2.0</TargetFrameworks>
+    <LangVersion>7.3</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GameEntities\GameEntities.csproj" />
+    <ProjectReference Include="..\TypeManager\TypeManager.csproj" />
+  </ItemGroup>
+
+  <Target Name="CopyDLLs" AfterTargets="Build" Condition="$(TargetFramework)=='netstandard2.0'">
+    <Message Text="Executing CopyDLLs task" Importance="High" />
+
+    <Copy SourceFiles="$(TargetDir)$(ProjectName).dll" DestinationFolder="$(TargetDir)\..\..\..\..\..\ld-51-every-10-seconds\Assets\Dependencies\" />
+
+    <Message Text="Copied build files" Importance="High" />
+  </Target>
+
+</Project>

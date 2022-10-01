@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>Library</OutputType>
+		<TargetFrameworks>net5.0;netstandard2.0</TargetFrameworks>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Content Include="x86_64\enet.dll" Link="enet.dll" Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="x86_64\libenet.so" Link="enet.so" Condition="$([MSBuild]::IsOSPlatform('Linux'))">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+	
+	<Target Name="CopyDLLs" AfterTargets="Build" Condition="$(TargetFramework)=='netstandard2.0'">
+		<Message Text="Executing CopyDLLs task" Importance="High" />
+
+		<Copy
+				SourceFiles="$(TargetDir)$(ProjectName).dll"
+				DestinationFolder="$(TargetDir)\..\..\..\..\..\ld-51-every-10-seconds\Assets\Dependencies\" />
+
+		<Message Text="Copied build files" Importance="High" />
+	</Target>
+
+</Project>
