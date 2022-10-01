@@ -12,12 +12,12 @@ public class GameView : MonoBehaviour
 	{
 		_field = new Field(10, 10);
 
-		_cells = new CellView[_field.Cells.Length];
+		_cells = new CellView[_field.CellsCount];
 
-		for (int i = 0; i < _field.Cells.Length; i++)
+		for (int i = 0; i < _field.CellsCount; i++)
 		{
 			var newCellView = Instantiate(CellViewPrefab);
-			newCellView.transform.parent = transform;
+			newCellView.transform.SetParent(transform, false);
 
 			newCellView.Index = i;
 
@@ -36,23 +36,32 @@ public class GameView : MonoBehaviour
 
 	private void CellView_OnMarkClick(int index)
 	{
-		Debug.Log($"Mark: {index}");
 		_field.Mark(index);
 		RefreshMatrixView();
 	}
 
 	private void CellView_OnPlayClick(int index)
 	{
-		Debug.Log($"Play: {index}");
 		_field.Play(index);
 		RefreshMatrixView();
 	}
 
 	private void RefreshMatrixView()
 	{
-		for (int i = 0; i < _field.Cells.Length; i++)
+		for (int i = 0; i < _field.CellsCount; i++)
 		{
-			_cells[i].UpdateText(_field.Cells[i].ToString());
+			if (_field.PlayerCells[i] == -2)
+			{
+				_cells[i].UpdateText("");
+			}
+			else if (_field.PlayerCells[i] == -1)
+			{
+				_cells[i].UpdateText("*");
+			}
+			else
+			{
+				_cells[i].UpdateText(_field.PlayerCells[i].ToString());
+			}
 		}
 	}
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Text;
 
@@ -8,63 +9,93 @@ using System.Text;
 
 public class Field
 {
-	public int Rows;
-	public int Lines;
+	private readonly sbyte[] _cells;
+	private readonly sbyte[] _playerCells;
 
-	public sbyte[] Cells;
+	private readonly int _rows;
+	private readonly int _lines;
+
+	private int _cellsLeft;
+
+	public int CellsCount => _cells.Length;
+
+	public sbyte[] PlayerCells
+	{
+		get => _playerCells;
+
+		private set
+		{
+
+		}
+	}
 
 	public Field(int rows, int lines)
 	{
-		Rows = rows;
-		Lines = lines;
+		_rows = rows;
+		_lines = lines;
 
-		Cells = new sbyte[rows * lines];
+		_cells = new sbyte[rows * lines];
+		_playerCells = new sbyte[rows * lines];
+		Array.Fill<sbyte>(_playerCells, -2);
 	}
 
 	public void InitializeField(int firstPlayIndex, int bombs)
 	{
-		var random = new System.Random();
-
-		var indexes = Enumerable.Range(0, Rows * Lines).Except(Enumerable.Repeat(firstPlayIndex, 1)).OrderBy(x => random.Next()).Take(bombs);
+		var random = new Random();
+		var indexes = Enumerable.Range(0, _rows * _lines).Except(Enumerable.Repeat(firstPlayIndex, 1)).OrderBy(x => random.Next()).Take(bombs);
 
 		foreach (var index in indexes)
 		{
-			Cells[index] = -1;
-			NumberNeighbouringCells(index);
-			PrintMatrix(); // debug
+			_cells[index] = -1;
+			NeighnbouringCellsAction(index, cellIndex => _cells[cellIndex]++);
 		}
 
+		_cellsLeft = (_rows * _lines) - bombs;
+
 		Play(firstPlayIndex);
-		PrintMatrix(); // debug
 	}
 
 	public void Mark(int index)
 	{
-		if (Cells[index] < 9)
+		if (_cells[index] < 9)
 		{
-			Cells[index] += 10;
+			_cells[index] += 10;
+			_playerCells[index] = -1;
+		}
+		else if (_cells[index] < 19)
+		{
+			_cells[index] -= 10;
+			_playerCells[index] = -2;
 		}
 	}
 
 	public void Play(int index)
 	{
-		if (Cells[index] == -1)
+		if (_cells[index] == -1)
 		{
 			UnityEngine.Debug.Log("Game over");
 			return;
 		}
 
-		if (Cells[index] >= 9)
+		if (_cells[index] >= 9)
 		{
-			return; // Flagged
+			return; // flagged
 		}
 
-		Cells[index] += 20;
+		_cells[index] += 20;
+		_playerCells[index] = (sbyte)(_cells[index] - 20);
 
-		if (Cells[index] == 20)
+		_cellsLeft--;
+
+		if (_cellsLeft <= 0)
 		{
-			// Play Neighbours
-			PlayNeighnbouringCells(index);
+			UnityEngine.Debug.Log("Victory");
+			return;
+		}
+
+		if (_cells[index] == 20)
+		{
+			NeighnbouringCellsAction(index, Play);
 		}
 	}
 
@@ -72,11 +103,11 @@ public class Field
 	{
 		var stringBuilder = new StringBuilder();
 
-		for (int i = 0; i < Cells.Length; i++)
+		for (int i = 0; i < _cells.Length; i++)
 		{
-			stringBuilder.Append($"{Cells[i]:0;X;*}, ");
+			stringBuilder.Append($"{_cells[i]:0;X;*}, ");
 
-			if (i % Rows == Rows - 1)
+			if (i % _rows == _rows - 1)
 			{
 				stringBuilder.AppendLine();
 			}
@@ -85,124 +116,63 @@ public class Field
 		UnityEngine.Debug.Log(stringBuilder.ToString());
 	}
 
-	private void PlayNeighnbouringCells(int index)
+	private void NeighnbouringCellsAction(int index, Action<int> action)
 	{
 		var freeLeft = false;
-		if (index % Rows > 0)
+		if (index % _rows > 0)  // left
 		{
-			if (Cells[index - 1] != -1)
+			if (_cells[index - 1] != -1)
 			{
-				Play(index - 1); //left
+				action.Invoke(index - 1);
 			}
 
 			freeLeft = true;
 		}
 
 		var freeRight = false;
-		if (index % Rows < Rows - 1)
+		if (index % _rows < _rows - 1)  // right
 		{
-			if (Cells[index + 1] != -1)
+			if (_cells[index + 1] != -1)
 			{
-				Play(index + 1); //right
+				action.Invoke(index + 1);
 			}
 
 			freeRight = true;
 		}
 
-		if (index >= Rows)
+		if (index >= _rows) // up
 		{
-			if (Cells[index - Rows] != -1)
+			if (_cells[index - _rows] != -1)
 			{
-				Play(index - Rows); //up
+				action.Invoke(index - _rows);
 			}
 
-			if (freeLeft && Cells[index - Rows - 1] != -1)
+			if (freeLeft && _cells[index - _rows - 1] != -1) // upper left
 			{
-				Play(index - Rows - 1);
+				action.Invoke(index - _rows - 1);
 			}
 
-			if (freeRight && Cells[index - Rows + 1] != -1)
+			if (freeRight && _cells[index - _rows + 1] != -1) // upper right
 			{
-				Play(index - Rows + 1);
+				action.Invoke(index - _rows + 1);
 			}
 		}
 
-		if (index < (Rows * Lines) - Rows - 1)
+		if (index < (_rows * _lines) - _rows - 1)  // down
 		{
-			if (Cells[index + Rows] != -1)
+			if (_cells[index + _rows] != -1)
 			{
-				Play(index + Rows); //down
+				action.Invoke(index + _rows);
 			}
 
-			if (freeLeft && Cells[index + Rows - 1] != -1)
+			if (freeLeft && _cells[index + _rows - 1] != -1) // bottom left
 			{
-				Play(index + Rows - 1);
+				action.Invoke(index + _rows - 1);
 			}
 
-			if (freeRight && Cells[index + Rows + 1] != -1)
+			if (freeRight && _cells[index + _rows + 1] != -1) // bottom right
 			{
-				Play(index + Rows + 1);
-			}
-		}
-	}
-
-	private void NumberNeighbouringCells(int index)
-	{
-		var freeLeft = false;
-		if (index % Rows > 0)
-		{
-			if (Cells[index - 1] != -1)
-			{
-				Cells[index - 1]++; //left
-			}
-
-			freeLeft = true;
-		}
-
-		var freeRight = false;
-		if (index % Rows < Rows - 1)
-		{
-			if (Cells[index + 1] != -1)
-			{
-				Cells[index + 1]++; //right
-			}
-
-			freeRight = true;
-		}
-
-		if (index >= Rows)
-		{
-			if (Cells[index - Rows] != -1)
-			{
-				Cells[index - Rows]++; //up
-			}
-
-			if (freeLeft && Cells[index - Rows - 1] != -1)
-			{
-				Cells[index - Rows - 1]++;
-			}
-
-			if (freeRight && Cells[index - Rows + 1] != -1)
-			{
-				Cells[index - Rows + 1]++;
-			}
-		}
-
-		if (index < (Rows * Lines) - Rows - 1)
-		{
-			if (Cells[index + Rows] != -1)
-			{
-				Cells[index + Rows]++; //down
-			}
-
-			if (freeLeft && Cells[index + Rows - 1] != -1)
-			{
-				Cells[index + Rows - 1]++;
-			}
-
-			if (freeRight && Cells[index + Rows + 1] != -1)
-			{
-				Cells[index + Rows + 1]++;
+				action.Invoke(index + _rows + 1);
 			}
 		}
 	}
