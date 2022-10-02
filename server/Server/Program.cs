@@ -35,6 +35,9 @@ public class Program
 		}
 	}
 
+	// TODO: Is there a way to make it thread safe without using a lock?
+	private static readonly object _gameLock = new object();
+
 	static void Main(string[] args)
 	{
 		var statistics = new ServerStatistics();
@@ -84,7 +87,8 @@ public class Program
 				{
 					statistics.CountMessageByType.TryAdd(messageType, 1);
 				}
-				lock (gameLock)
+
+				lock (_gameLock)
 				{
 					e.Message.Execute(e.Sender, transporter, gameState, eventManager);
 				}
@@ -92,26 +96,6 @@ public class Program
 
 			transporter.ConnectHandle += (sender, peer) =>
 			{
-				//var avatarID = rand.Next();
-				//var avatar = new Avatar
-				//{
-				//	ID = avatarID,
-				//	Name = 
-				//}
-
-				//var minesweeperGame = new MinesweeperGame(10, 10)
-				//{
-				//	ID = newID
-				//};
-
-				//gameState.Add(minesweeperGame);
-
-				//gameState.TryAssignOwner(newID, peer);
-
-				//transporter.Send(new OwnerMessage
-				//{
-				//	ID = newID
-				//}, peer);
 				var avatars = new List<Avatar>();
 
 				foreach (var entity in gameState.Entities)
@@ -130,7 +114,7 @@ public class Program
 
 			transporter.DisconnectHandle += (sender, peer) =>
 			{
-				lock (gameLock)
+				lock (_gameLock)
 				{
 					if (gameState.EntityOwnerMap.TryRemove(peer, out var avatarID))
 					{
@@ -143,14 +127,14 @@ public class Program
 						var game = gameState.Get<BaseEntity>(gameID);
 
 						// I'm not sure about this check
-						if (game != null)
+						//if (game != null)
 						{
 							gameState.Remove(game);
 						}
-						else
-						{
-							Console.WriteLine("Happened again.");
-						}
+						//else
+						//{
+						//Console.WriteLine("Happened again.");
+						//}
 					}
 				}
 			};
@@ -211,22 +195,52 @@ public class Program
 		}
 	}
 
-	private static object gameLock = new object();
-
 	private static void CreateNewGames(GameState gameState, ENetTransporterServer transporter)
 	{
 		var rand = new Random((int)DateTime.Now.Ticks);
 
 		IBasePeer? firstPeer = null;
 		IBasePeer? previousPeer;
-		long firstGameID;
+		long firstGameID = 0;
 		long previousGameID = 0;
 
-		lock (gameLock)
+		lock (_gameLock)
 		{
 			foreach (var peer in gameState.EntityOwnerMap.Keys)
 			{
-				if (!gameState.OwnerToGameMap.ContainsKey(peer))
+				if (gameState.OwnerToGameMap.TryGetValue(peer, out var currentGameID))
+				{
+					//var currentGameID = gameState.OwnerToGameMap[peer];
+
+					if (firstPeer == null)
+					{
+						firstPeer = peer;
+						firstGameID = currentGameID;
+
+						Console.WriteLine($"firstPeer was: {currentGameID} - peer: {peer}");
+					}
+					else// if (gameState.Get<MinesweeperGame>(previousGameID) != null) // Why check this if? I don't know yet.
+					{
+						if (gameState.OwnerToGameMap.TryUpdate(peer, previousGameID, currentGameID))
+						{
+							Console.WriteLine($"currentGameID: {currentGameID} - previousGameID: {previousGameID} - peer: {peer}");
+
+							transporter.Send(new GameChangeMessage
+							{
+								GameID = previousGameID,
+								Values = gameState.Get<MinesweeperGame>(previousGameID).PlayerCells
+							}, peer);
+						}
+						else
+						{
+							Console.WriteLine($"Game could not be updated.");
+						}
+					}
+
+					previousPeer = peer;
+					previousGameID = currentGameID;
+				}
+				else
 				{
 					var newID = rand.Next();
 					Console.WriteLine($"NewId: {newID} - peer: {peer}");
@@ -236,55 +250,39 @@ public class Program
 						ID = newID
 					};
 
-					gameState.OwnerToGameMap[peer] = newGame.ID;
-					gameState.Add(newGame);
-
-					transporter.Send(new GameChangeMessage
+					if (gameState.OwnerToGameMap.TryAdd(peer, newGame.ID))
 					{
-						GameID = newID,
-						Values = newGame.PlayerCells
-					}, peer);
-				}
-				else
-				{
-					var auxGameID = gameState.OwnerToGameMap[peer];
-
-					if (firstPeer == null)
-					{
-						firstPeer = peer;
-						firstGameID = auxGameID;
-
-						Console.WriteLine($"firstPeer was: {auxGameID} - peer: {peer}");
-					}
-					else// if (gameState.Get<MinesweeperGame>(previousGameID) != null) // Why check this if? I don't know yet.
-					{
-						gameState.OwnerToGameMap[peer] = previousGameID;
-
-						Console.WriteLine($"currentGameID: {auxGameID} - previousGameID: {previousGameID} - peer: {peer}");
+						gameState.Add(newGame);
 
 						transporter.Send(new GameChangeMessage
 						{
-							GameID = previousGameID,
-							Values = gameState.Get<MinesweeperGame>(previousGameID).PlayerCells
+							GameID = newID,
+							Values = newGame.PlayerCells
 						}, peer);
 					}
-
-					previousPeer = peer;
-					previousGameID = auxGameID;
+					else
+					{
+						Console.WriteLine($"Game could not be added. Ignoring.");
+					}
 				}
 			}
 
 			if (firstPeer != null)
 			{
-				gameState.OwnerToGameMap[firstPeer] = previousGameID;
-
-				Console.WriteLine($"applyFirst: {previousGameID} - peer: {firstPeer}");
-
-				transporter.Send(new GameChangeMessage
+				if (gameState.OwnerToGameMap.TryUpdate(firstPeer, previousGameID, firstGameID))
 				{
-					GameID = previousGameID,
-					Values = gameState.Get<MinesweeperGame>(previousGameID).PlayerCells
-				}, firstPeer);
+					Console.WriteLine($"applyFirst: {previousGameID} - peer: {firstPeer}");
+
+					transporter.Send(new GameChangeMessage
+					{
+						GameID = previousGameID,
+						Values = gameState.Get<MinesweeperGame>(previousGameID).PlayerCells
+					}, firstPeer);
+				}
+				else
+				{
+					Console.WriteLine($"Game could not be updated.");
+				}
 			}
 		}
 	}

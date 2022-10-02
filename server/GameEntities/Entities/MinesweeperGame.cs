@@ -15,6 +15,11 @@ namespace GameEntities.Entities
 	public class MinesweeperGame : BaseEntity
 	{
 		public sbyte[] PlayerCells { get; set; }
+		public int CellsCount => _cells.Length;
+
+		// It's being called multipletimes as events
+		public Action OnVictory;
+		public Action OnGameOver;
 
 		private readonly sbyte[] _cells;
 
@@ -25,7 +30,6 @@ namespace GameEntities.Entities
 
 		private bool _initialized;
 
-		public int CellsCount => _cells.Length;
 
 		public MinesweeperGame(int columns, int rows)
 		{
@@ -57,6 +61,7 @@ namespace GameEntities.Entities
 			}
 		}
 
+
 		public void Play(int index)
 		{
 			if (!_initialized)
@@ -68,6 +73,7 @@ namespace GameEntities.Entities
 			if (_cells[index] == -1)
 			{
 				Console.WriteLine("Game over");
+				OnGameOver.Invoke();
 				return;
 			}
 
@@ -84,6 +90,7 @@ namespace GameEntities.Entities
 			if (_cellsLeft <= 0)
 			{
 				Console.WriteLine("Victory");
+				OnVictory.Invoke();
 				return;
 			}
 
