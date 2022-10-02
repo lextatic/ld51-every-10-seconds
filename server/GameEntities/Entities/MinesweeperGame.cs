@@ -27,9 +27,9 @@ namespace GameEntities.Entities
 		private readonly int _rows;
 
 		private int _cellsLeft;
+		private int _flagsLeft;
 
 		private bool _initialized;
-
 
 		public MinesweeperGame(int columns, int rows)
 		{
@@ -51,13 +51,20 @@ namespace GameEntities.Entities
 		{
 			if (_cells[index] < 9)
 			{
+				if (_flagsLeft <= 0)
+				{
+					return;
+				}
+
 				_cells[index] += 10;
 				PlayerCells[index] = -1;
+				_flagsLeft--;
 			}
 			else if (_cells[index] < 19)
 			{
 				_cells[index] -= 10;
 				PlayerCells[index] = -2;
+				_flagsLeft++;
 			}
 		}
 
@@ -66,8 +73,8 @@ namespace GameEntities.Entities
 		{
 			if (!_initialized)
 			{
-				InitializeField(index, 1);
-				//InitializeField(index, 10);
+				//InitializeField(index, 1); // for tests (instant win)
+				InitializeField(index, 10);
 				_initialized = true;
 			}
 
@@ -151,6 +158,7 @@ namespace GameEntities.Entities
 			}
 
 			_cellsLeft = (_columns * _rows) - bombs;
+			_flagsLeft = bombs;
 		}
 
 		private void NeighnbouringCellsAction(int index, Action<int> action)

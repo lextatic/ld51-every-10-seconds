@@ -25,9 +25,10 @@ public class Program : MonoBehaviour
 
 	private readonly ConcurrentStack<BaseEntity> _destroyStack = new ConcurrentStack<BaseEntity>();
 
-	private bool _mainThreadRefreshGame = false;
-
 	private readonly ConcurrentStack<Avatar> _scoreUpdateStack = new ConcurrentStack<Avatar>();
+
+	private bool _mainThreadRefreshGame = false;
+	private bool _mainThreadStartCount = false;
 
 	private void Start()
 	{
@@ -96,6 +97,7 @@ public class Program : MonoBehaviour
 					break;
 
 				case GameChangeMessage gameUpdateMessage:
+					_mainThreadStartCount = true;
 					_mainThreadRefreshGame = true;
 					break;
 
@@ -182,6 +184,12 @@ public class Program : MonoBehaviour
 		{
 			_mainThreadRefreshGame = false;
 			GameView.RefreshMatrixView(_gameState.MyGame);
+		}
+
+		if (_mainThreadStartCount)
+		{
+			_mainThreadStartCount = false;
+			GameView.StartCount();
 		}
 
 		while (_scoreUpdateStack.Count > 0)

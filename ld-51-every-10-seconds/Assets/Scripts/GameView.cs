@@ -1,10 +1,15 @@
 using GameEntities.Entities;
 using System;
+using System.Collections;
+using TMPro;
 using UnityEngine;
 
 public class GameView : MonoBehaviour
 {
 	public CellView CellViewPrefab;
+
+	public TextMeshProUGUI Flags;
+	public TextMeshProUGUI Timer;
 
 	private CellView[] _cells;
 
@@ -31,6 +36,28 @@ public class GameView : MonoBehaviour
 		RefreshMatrixView(minesweeperGame);
 	}
 
+	public void StartCount()
+	{
+		StartCoroutine(CountCoroutine());
+	}
+
+	private IEnumerator CountCoroutine()
+	{
+		Timer.color = Color.white;
+
+		for (int timer = 10; timer >= 1; timer--)
+		{
+			Timer.text = timer.ToString();
+
+			if (timer <= 3)
+			{
+				Timer.color = Color.red;
+			}
+
+			yield return new WaitForSeconds(1);
+		}
+	}
+
 	private void CellView_OnMarkClick(int index)
 	{
 		OnMarkClick.Invoke(index);
@@ -43,6 +70,8 @@ public class GameView : MonoBehaviour
 
 	public void RefreshMatrixView(MinesweeperGame minesweeperGame)
 	{
+		int flagsCount = 10;
+
 		for (int i = 0; i < minesweeperGame.PlayerCells.Length; i++)
 		{
 			if (minesweeperGame.PlayerCells[i] == -2)
@@ -52,11 +81,23 @@ public class GameView : MonoBehaviour
 			else if (minesweeperGame.PlayerCells[i] == -1)
 			{
 				_cells[i].UpdateText("*");
+				flagsCount--;
 			}
 			else
 			{
 				_cells[i].UpdateText(minesweeperGame.PlayerCells[i].ToString());
 			}
+		}
+
+		Flags.text = flagsCount.ToString();
+
+		if (flagsCount <= 3)
+		{
+			Flags.color = Color.red;
+		}
+		else
+		{
+			Flags.color = Color.white;
 		}
 	}
 }
