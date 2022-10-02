@@ -66,7 +66,8 @@ namespace GameEntities.Entities
 		{
 			if (!_initialized)
 			{
-				InitializeField(index, 10);
+				InitializeField(index, 1);
+				//InitializeField(index, 10);
 				_initialized = true;
 			}
 

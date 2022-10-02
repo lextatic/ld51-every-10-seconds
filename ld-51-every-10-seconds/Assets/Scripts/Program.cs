@@ -25,7 +25,9 @@ public class Program : MonoBehaviour
 
 	private readonly ConcurrentStack<BaseEntity> _destroyStack = new ConcurrentStack<BaseEntity>();
 
-	private bool _mainThreadRefresh = false;
+	private bool _mainThreadRefreshGame = false;
+
+	private readonly ConcurrentStack<Avatar> _scoreUpdateStack = new ConcurrentStack<Avatar>();
 
 	private void Start()
 	{
@@ -40,6 +42,7 @@ public class Program : MonoBehaviour
 		_transporter = new ENetTransporterClient(serializer);
 
 		TypeManager.TypeManager.RegisterClass<GameUpdateMessage>();
+		TypeManager.TypeManager.RegisterClass<AvatarUpdateMessage>();
 		TypeManager.TypeManager.RegisterClass<GameChangeMessage>();
 		TypeManager.TypeManager.RegisterClass<AvatarStateMessage>();
 		TypeManager.TypeManager.RegisterClass<OwnerMessage>();
@@ -89,12 +92,17 @@ public class Program : MonoBehaviour
 			switch (e.Message)
 			{
 				case GameUpdateMessage gameUpdateMessage:
-					_mainThreadRefresh = true;
+					_mainThreadRefreshGame = true;
 					break;
 
 				case GameChangeMessage gameUpdateMessage:
-					_mainThreadRefresh = true;
+					_mainThreadRefreshGame = true;
 					break;
+
+				case AvatarUpdateMessage avatarUpdateMessage:
+					_scoreUpdateStack.Push(_gameState.Get<Avatar>(avatarUpdateMessage.AvatarID));
+					break;
+
 					//case AvatarStateMessage avatarStateMessage:
 					//	mainThreadRefresh = true;
 					//	break;
@@ -170,11 +178,18 @@ public class Program : MonoBehaviour
 
 	private void Update()
 	{
-		if (_mainThreadRefresh)
+		if (_mainThreadRefreshGame)
 		{
-			_mainThreadRefresh = false;
+			_mainThreadRefreshGame = false;
 			GameView.RefreshMatrixView(_gameState.MyGame);
-			Debug.Log("Refresh part 2");
+		}
+
+		while (_scoreUpdateStack.Count > 0)
+		{
+			if (_scoreUpdateStack.TryPop(out var avatar))
+			{
+				RankingView.RefreshRanking(avatar);
+			}
 		}
 
 		var hasUpdate = false;

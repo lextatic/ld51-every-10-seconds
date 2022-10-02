@@ -22,8 +22,7 @@ namespace GameEntities.Messages
 
 			eventManager.Dispatch("GameUpdateMessage", this);
 
-
-			clientGameState.MyGame.ID = GameID;
+			//clientGameState.MyGame.ID = GameID;
 			clientGameState.MyGame.PlayerCells = Values;
 
 			Console.WriteLine(clientGameState.MyGame.ToStringPlayer());

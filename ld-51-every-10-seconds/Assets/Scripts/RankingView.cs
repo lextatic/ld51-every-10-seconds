@@ -8,6 +8,18 @@ public class RankingView : MonoBehaviour
 
 	private readonly List<AvatarView> _avatarList = new();
 
+	public void RefreshRanking(Avatar avatar)
+	{
+		for (int i = 0; i < _avatarList.Count; i++)
+		{
+			if (string.Equals(_avatarList[i].Name.text, avatar.Name))
+			{
+				_avatarList[i].Score.text = avatar.Score.ToString();
+				break;
+			}
+		}
+	}
+
 	public void AddAvatar(Avatar newAvatar)
 	{
 		var newAvatarView = Instantiate(AvatarViewPrefab);

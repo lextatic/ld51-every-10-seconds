@@ -38,6 +38,7 @@ public class Program
 			var eventManager = scope.Resolve<BaseEventManager>();
 
 			TypeManager.TypeManager.RegisterClass<GameUpdateMessage>();
+			TypeManager.TypeManager.RegisterClass<AvatarUpdateMessage>();
 			TypeManager.TypeManager.RegisterClass<GameChangeMessage>();
 			TypeManager.TypeManager.RegisterClass<AvatarStateMessage>();
 			TypeManager.TypeManager.RegisterClass<OwnerMessage>();

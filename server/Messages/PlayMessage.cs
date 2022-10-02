@@ -42,14 +42,14 @@ namespace GameEntities.Messages
 
 			eventManager.Dispatch("PlayMessage", this);
 
-			targetGame.OnVictory = GameOverHandler;
+			targetGame.OnVictory = VictoryHandler;
 			targetGame.OnGameOver = GameOverHandler;
 			targetGame.Play(Index);
 			// TODO: Oh boy... I prefer to use events, but it was bugged.
 			targetGame.OnVictory = null;
 			targetGame.OnGameOver = null;
 
-			transporter.Send(new GameUpdateMessage
+			_transporter.Send(new GameUpdateMessage
 			{
 				GameID = GameID,
 				Values = targetGame.PlayerCells
@@ -62,6 +62,24 @@ namespace GameEntities.Messages
 			GC.Collect();
 		}
 
+		private void VictoryHandler()
+		{
+			if (_serverGameState.OwnerToGameMap.TryRemove(_sender, out var gameID))
+			{
+				var game = _serverGameState.Get<BaseEntity>(gameID);
+				_serverGameState.Remove(game);
+			}
+
+			var avatar = _serverGameState.Get<Avatar>(_serverGameState.EntityOwnerMap[_sender]);
+			avatar.Score += 10;
+
+			_transporter.Send(new AvatarUpdateMessage
+			{
+				AvatarID = avatar.ID,
+				Score = avatar.Score
+			});
+		}
+
 		private void GameOverHandler()
 		{
 			if (_serverGameState.OwnerToGameMap.TryRemove(_sender, out var gameID))
@@ -69,6 +87,25 @@ namespace GameEntities.Messages
 				var game = _serverGameState.Get<BaseEntity>(gameID);
 				_serverGameState.Remove(game);
 			}
+
+			var avatar = _serverGameState.Get<Avatar>(_serverGameState.EntityOwnerMap[_sender]);
+
+			// Would be easier to use checked/unchecked, but I don't remember how to use them right now and the
+			// deadline is upon us.
+			if (avatar.Score < 10)
+			{
+				avatar.Score = 0;
+			}
+			else
+			{
+				avatar.Score -= 10;
+			}
+
+			_transporter.Send(new AvatarUpdateMessage
+			{
+				AvatarID = avatar.ID,
+				Score = avatar.Score
+			});
 		}
 	}
 }
