@@ -81,19 +81,21 @@ public class GameView : MonoBehaviour
 
 		for (int i = 0; i < minesweeperGame.PlayerCells.Length; i++)
 		{
-			if (minesweeperGame.PlayerCells[i] == -2)
-			{
-				_cells[i].UpdateText("");
-			}
-			else if (minesweeperGame.PlayerCells[i] == -1)
-			{
-				_cells[i].UpdateText("*");
-				flagsCount--;
-			}
-			else
-			{
-				_cells[i].UpdateText(minesweeperGame.PlayerCells[i].ToString());
-			}
+			_cells[i].UpdateVisual(minesweeperGame.PlayerCells[i]);
+
+			//if (minesweeperGame.PlayerCells[i] == -2)
+			//{
+			//	_cells[i].UpdateVisual("");
+			//}
+			//else if (minesweeperGame.PlayerCells[i] == -1)
+			//{
+			//	_cells[i].UpdateVisual("flag");
+			//	flagsCount--;
+			//}
+			//else
+			//{
+			//	_cells[i].UpdateVisual(minesweeperGame.PlayerCells[i].ToString());
+			//}
 		}
 
 		Flags.text = flagsCount.ToString();

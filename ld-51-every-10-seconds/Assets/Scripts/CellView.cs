@@ -2,11 +2,17 @@ using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public class CellView : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 {
 	public int Index;
 	public TextMeshProUGUI Text;
+	public Image Background;
+	public Image Flag;
+	public Image Bomb;
+	public Sprite RevealedSprite;
+	public Sprite ClosedSprite;
 
 	public event Action<int> OnPlayClick;
 	public event Action<int> OnMarkClick;
@@ -56,8 +62,34 @@ public class CellView : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 		}
 	}
 
-	public void UpdateText(string newText)
+	public void UpdateVisual(int newValue)
 	{
-		Text.text = newText;
+		Text.text = "";
+		Background.sprite = ClosedSprite;
+		Flag.gameObject.SetActive(false);
+		Bomb.gameObject.SetActive(false);
+
+		switch (newValue)
+		{
+			case -2:
+				// Closed
+				break;
+
+			case -1:
+				// Flag
+				Flag.gameObject.SetActive(true);
+				break;
+
+			case 0:
+				// Empty
+				Background.sprite = RevealedSprite;
+				break;
+
+			default:
+				// Number
+				Background.sprite = RevealedSprite;
+				Text.text = newValue.ToString();
+				break;
+		}
 	}
 }
