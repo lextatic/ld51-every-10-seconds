@@ -4,7 +4,7 @@ using System;
 namespace GameEntities.Messages
 {
 	[Serializable]
-	public struct GameUpdateMessage : IBaseMessage
+	public struct GameChangeMessage : IBaseMessage
 	{
 		public long GameID;
 		public sbyte[] Values;
@@ -13,15 +13,14 @@ namespace GameEntities.Messages
 		{
 			var clientGameState = (GameState)gameState;
 
-			// Só aceita se for ID igual
-			if (clientGameState.MyGame.ID != GameID)
+			// Só aceita se for ID diferente
+			if (clientGameState.MyGame.ID == GameID)
 			{
-				Console.WriteLine("Aborting GameUpdate, different ID.");
+				Console.WriteLine("Aborting GameChange, already same ID.");
 				return;
 			}
 
-			eventManager.Dispatch("GameUpdateMessage", this);
-
+			eventManager.Dispatch("GameChangeMessage", this);
 
 			clientGameState.MyGame.ID = GameID;
 			clientGameState.MyGame.PlayerCells = Values;

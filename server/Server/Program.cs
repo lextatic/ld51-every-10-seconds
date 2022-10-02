@@ -70,7 +70,7 @@ public class Program
 			TypeManager.TypeManager.RegisterClass<PlayMessage>();
 
 			// TODO: Improve generate entity ID
-			var rand = new Random(DateTime.Now.Millisecond);
+			var rand = new Random((int)DateTime.Now.Ticks);
 
 			transporter.MessageReceived += (sender, e) =>
 			{
@@ -84,7 +84,10 @@ public class Program
 				{
 					statistics.CountMessageByType.TryAdd(messageType, 1);
 				}
-				e.Message.Execute(e.Sender, transporter, gameState, eventManager);
+				lock (gameLock)
+				{
+					e.Message.Execute(e.Sender, transporter, gameState, eventManager);
+				}
 			};
 
 			transporter.ConnectHandle += (sender, peer) =>
@@ -127,16 +130,28 @@ public class Program
 
 			transporter.DisconnectHandle += (sender, peer) =>
 			{
-				if (gameState.EntityOwnerMap.TryRemove(peer, out var avatarID))
+				lock (gameLock)
 				{
-					var avatar = gameState.Get<BaseEntity>(avatarID);
-					gameState.Remove(avatar);
-				}
+					if (gameState.EntityOwnerMap.TryRemove(peer, out var avatarID))
+					{
+						var avatar = gameState.Get<BaseEntity>(avatarID);
+						gameState.Remove(avatar);
+					}
 
-				if (gameState.OwnerToGameMap.TryRemove(peer, out var gameID))
-				{
-					var game = gameState.Get<BaseEntity>(gameID);
-					gameState.Remove(game);
+					if (gameState.OwnerToGameMap.TryRemove(peer, out var gameID))
+					{
+						var game = gameState.Get<BaseEntity>(gameID);
+
+						// I'm not sure about this check
+						if (game != null)
+						{
+							gameState.Remove(game);
+						}
+						else
+						{
+							Console.WriteLine("Happened again.");
+						}
+					}
 				}
 			};
 
@@ -196,69 +211,81 @@ public class Program
 		}
 	}
 
+	private static object gameLock = new object();
+
 	private static void CreateNewGames(GameState gameState, ENetTransporterServer transporter)
 	{
-		var rand = new Random(DateTime.Now.Millisecond);
+		var rand = new Random((int)DateTime.Now.Ticks);
 
 		IBasePeer? firstPeer = null;
-		IBasePeer? previousPeer = null;
-		long firstGameID = 0;
+		IBasePeer? previousPeer;
+		long firstGameID;
 		long previousGameID = 0;
 
-		foreach (var peer in gameState.EntityOwnerMap.Keys)
+		lock (gameLock)
 		{
-			if (!gameState.OwnerToGameMap.ContainsKey(peer))
+			foreach (var peer in gameState.EntityOwnerMap.Keys)
 			{
-				var newID = rand.Next();
-
-				var newGame = new MinesweeperGame(10, 10)
+				if (!gameState.OwnerToGameMap.ContainsKey(peer))
 				{
-					ID = newID
-				};
+					var newID = rand.Next();
+					Console.WriteLine($"NewId: {newID} - peer: {peer}");
 
-				gameState.OwnerToGameMap[peer] = newGame.ID;
-				gameState.Add(newGame);
+					var newGame = new MinesweeperGame(10, 10)
+					{
+						ID = newID
+					};
 
-				transporter.Send(new GameUpdateMessage
-				{
-					GameID = newID,
-					Values = newGame.PlayerCells
-				}, peer);
-			}
-			else
-			{
-				var auxGameID = gameState.OwnerToGameMap[peer];
+					gameState.OwnerToGameMap[peer] = newGame.ID;
+					gameState.Add(newGame);
 
-				if (firstPeer == null)
-				{
-					firstPeer = peer;
-					firstGameID = auxGameID;
+					transporter.Send(new GameChangeMessage
+					{
+						GameID = newID,
+						Values = newGame.PlayerCells
+					}, peer);
 				}
 				else
 				{
-					gameState.OwnerToGameMap[peer] = previousGameID;
+					var auxGameID = gameState.OwnerToGameMap[peer];
 
-					transporter.Send(new GameUpdateMessage
+					if (firstPeer == null)
 					{
-						GameID = previousGameID,
-						Values = gameState.Get<MinesweeperGame>(previousGameID).PlayerCells
-					}, peer);
+						firstPeer = peer;
+						firstGameID = auxGameID;
+
+						Console.WriteLine($"firstPeer was: {auxGameID} - peer: {peer}");
+					}
+					else// if (gameState.Get<MinesweeperGame>(previousGameID) != null) // Why check this if? I don't know yet.
+					{
+						gameState.OwnerToGameMap[peer] = previousGameID;
+
+						Console.WriteLine($"currentGameID: {auxGameID} - previousGameID: {previousGameID} - peer: {peer}");
+
+						transporter.Send(new GameChangeMessage
+						{
+							GameID = previousGameID,
+							Values = gameState.Get<MinesweeperGame>(previousGameID).PlayerCells
+						}, peer);
+					}
+
+					previousPeer = peer;
+					previousGameID = auxGameID;
 				}
-
-				previousPeer = peer;
-				previousGameID = auxGameID;
 			}
-		}
 
-		if (firstPeer != null)
-		{
-			gameState.OwnerToGameMap[firstPeer] = previousGameID;
-
-			transporter.Send(new GameUpdateMessage
+			if (firstPeer != null)
 			{
-				GameID = previousGameID,
-				Values = gameState.Get<MinesweeperGame>(previousGameID).PlayerCells
-			}, firstPeer);
+				gameState.OwnerToGameMap[firstPeer] = previousGameID;
+
+				Console.WriteLine($"applyFirst: {previousGameID} - peer: {firstPeer}");
+
+				transporter.Send(new GameChangeMessage
+				{
+					GameID = previousGameID,
+					Values = gameState.Get<MinesweeperGame>(previousGameID).PlayerCells
+				}, firstPeer);
+			}
 		}
 	}
 

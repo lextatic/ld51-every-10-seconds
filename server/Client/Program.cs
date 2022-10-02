@@ -38,6 +38,7 @@ public class Program
 			var eventManager = scope.Resolve<BaseEventManager>();
 
 			TypeManager.TypeManager.RegisterClass<GameUpdateMessage>();
+			TypeManager.TypeManager.RegisterClass<GameChangeMessage>();
 			TypeManager.TypeManager.RegisterClass<AvatarStateMessage>();
 			TypeManager.TypeManager.RegisterClass<OwnerMessage>();
 			TypeManager.TypeManager.RegisterClass<CreateAvatarMessage>();
@@ -90,7 +91,7 @@ public class Program
 				Console.ForegroundColor = ConsoleColor.Green;
 				Console.WriteLine("Play 50");
 				Console.ResetColor();
-				transporter.Send(new PlayMessage { GameId = gameState.MyGame.ID, Index = 50 });
+				transporter.Send(new PlayMessage { GameID = gameState.MyGame.ID, Index = 50 });
 				return false;
 			case ConsoleKey.D3:
 				Console.ForegroundColor = ConsoleColor.Green;

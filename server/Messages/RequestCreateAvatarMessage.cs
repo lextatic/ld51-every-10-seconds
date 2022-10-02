@@ -11,7 +11,7 @@ namespace GameEntities.Messages
 
 		public void Execute(IBasePeer sender, BaseTransporter transporter, BaseGameState gameState, BaseEventManager eventManager)
 		{
-			var rand = new Random(DateTime.Now.Millisecond);
+			var rand = new Random((int)DateTime.Now.Ticks);
 
 			var avatarID = rand.Next();
 			var avatar = new Avatar

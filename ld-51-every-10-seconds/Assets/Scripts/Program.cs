@@ -5,9 +5,8 @@ using GameEntities;
 using GameEntities.Entities;
 using GameEntities.Messages;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
+using Avatar = GameEntities.Entities.Avatar;
 
 public class Program : MonoBehaviour
 {
@@ -19,18 +18,20 @@ public class Program : MonoBehaviour
 
 	EventManager _eventManager;
 
-	Dictionary<BaseEntity, MinesweeperGame> _games = new Dictionary<BaseEntity, MinesweeperGame>();
+	//ConcurrentStack<long> _ownerWaitForEntity = new ConcurrentStack<long>();
 
-	ConcurrentStack<long> _ownerWaitForEntity = new ConcurrentStack<long>();
+	private readonly ConcurrentStack<BaseEntity> _createStack = new ConcurrentStack<BaseEntity>();
 
-	//ConcurrentStack<BaseEntity> createStack = new ConcurrentStack<BaseEntity>();
+	private readonly ConcurrentStack<BaseEntity> _destroyStack = new ConcurrentStack<BaseEntity>();
 
-	//ConcurrentStack<BaseEntity> destroyStack = new ConcurrentStack<BaseEntity>();
-
-	private bool mainThreadRefresh = false;
+	private bool _mainThreadRefresh = false;
 
 	private void Start()
 	{
+		GameView.Initialize(new MinesweeperGame(10, 10));
+		GameView.OnPlayClick += GameView_OnPlayClick;
+		GameView.OnMarkClick += GameView_OnMarkClick;
+
 		ENet.Library.Initialize();
 
 		var serializer = new CustomJsonSerialize();
@@ -38,24 +39,27 @@ public class Program : MonoBehaviour
 		_transporter = new ENetTransporterClient(serializer);
 
 		TypeManager.TypeManager.RegisterClass<GameUpdateMessage>();
-		TypeManager.TypeManager.RegisterClass<GameStateMessage>();
+		TypeManager.TypeManager.RegisterClass<GameChangeMessage>();
+		TypeManager.TypeManager.RegisterClass<AvatarStateMessage>();
 		TypeManager.TypeManager.RegisterClass<OwnerMessage>();
+		TypeManager.TypeManager.RegisterClass<CreateAvatarMessage>();
+		TypeManager.TypeManager.RegisterClass<DestroyAvatarMessage>();
 
 		_gameState = new GameState();
 
 		_gameState.OnAdd += (sender, e) =>
 		{
-			//createStack.Push(e);
+			_createStack.Push(e);
 		};
 
-		_gameState.OnAssignOwner += (sender, e) =>
-		{
-			_ownerWaitForEntity.Push(e.EntityID);
-		};
+		//_gameState.OnAssignOwner += (sender, e) =>
+		//{
+		//	_ownerWaitForEntity.Push(e.EntityID);
+		//};
 
 		_gameState.OnRemove += (sender, e) =>
 		{
-			//destroyStack.Push(e);
+			_destroyStack.Push(e);
 		};
 
 		_eventManager = new EventManager();
@@ -67,7 +71,10 @@ public class Program : MonoBehaviour
 		_transporter.ConnectHandle += (sender, e) =>
 		{
 			// Enviar nickname
-			//_transporter.Send(new RequestGameStateMessage());
+			_transporter.Send(new RequestCreateAvatarMessage
+			{
+				Name = "Lex"
+			});
 		};
 
 		// Escutando mensagens chegando
@@ -81,8 +88,27 @@ public class Program : MonoBehaviour
 			switch (e.Message)
 			{
 				case GameUpdateMessage gameUpdateMessage:
-					mainThreadRefresh = true;
+					_mainThreadRefresh = true;
 					break;
+
+				case GameChangeMessage gameUpdateMessage:
+					_mainThreadRefresh = true;
+					break;
+					//case AvatarStateMessage avatarStateMessage:
+					//	mainThreadRefresh = true;
+					//	break;
+
+					//case OwnerMessage ownerMessage:
+					//	mainThreadRefresh = true;
+					//	break;
+
+					//case CreateAvatarMessage createAvatarMessage:
+					//	mainThreadRefresh = true;
+					//	break;
+
+					//case DestroyAvatarMessage destroyAvatarMessage:
+					//	mainThreadRefresh = true;
+					//	break;
 			}
 		};
 
@@ -91,7 +117,7 @@ public class Program : MonoBehaviour
 
 	private void OnGameUpdateMessage(GameUpdateMessage message)
 	{
-		var game = _gameState.Get<MinesweeperGame>(message.GameId);
+		var game = _gameState.Get<MinesweeperGame>(message.GameID);
 		GameView.RefreshMatrixView(game);
 		Debug.Log("Refresh EVENT");
 	}
@@ -143,79 +169,68 @@ public class Program : MonoBehaviour
 
 	private void Update()
 	{
-		if (mainThreadRefresh)
+		if (_mainThreadRefresh)
 		{
-			mainThreadRefresh = false;
-			var game = _gameState.Get<MinesweeperGame>(_gameState.MyEntities.ElementAt(0));
-			GameView.RefreshMatrixView(game);
+			_mainThreadRefresh = false;
+			GameView.RefreshMatrixView(_gameState.MyGame);
 			Debug.Log("Refresh part 2");
 		}
 
 		var hasUpdate = false;
-		//while (createStack.Count > 0)
+		while (_createStack.Count > 0)
 		{
-			//if (createStack.TryPop(out var entity))
-			//{
-
-			//	if (entity.GetType() == typeof(Ball))
-			//	{
-			//		var newObject = Instantiate(ballPrefab);
-			//		newObject.transform.position = _spawnPoint[spawnPosition++].transform.position;
-			//		_games.Add(entity, newObject);
-			//	}
-			//	else if (entity.GetType() == typeof(GameEntities.Avatar))
-			//	{
-			//		var avatar = (GameEntities.Avatar)entity;
-			//		var newObject = Instantiate(avatarPrefab);
-			//		newObject.transform.position = new UnityEngine.Vector3(avatar.Position.x, avatar.Position.y, avatar.Position.z);
-			//		_avatarGameObject.Add(entity, newObject);
-			//		newObject.EntityID = avatar.Id;
-			//		newObject._baseGameState = _gameState;
-			//		newObject._transporter = _transporter;
-			//		newObject.Health = avatar.Health;
-			//		newObject.UpdateHealthBar();
-			//	}
-			//	hasUpdate = true;
-			//}
-		}
-
-
-		//while (destroyStack.Count > 0)
-		{
-			//if (destroyStack.TryPop(out var entity))
-			//{
-			//	if (entity.GetType() == typeof(Ball))
-			//	{
-			//		_games.TryGetValue(entity, out var value);
-			//		_games.Remove(entity);
-			//		Destroy(value.gameObject);
-			//	}
-			//	else if (entity.GetType() == typeof(GameEntities.Avatar))
-			//	{
-			//		_avatarGameObject.TryGetValue(entity, out var value);
-			//		_avatarGameObject.Remove(entity);
-			//		Destroy(value.gameObject);
-			//	}
-			//	hasUpdate = true;
-			//}
-		}
-
-		if (_ownerWaitForEntity.Count > 0)
-		{
-			if (_ownerWaitForEntity.TryPeek(out var id))
+			if (_createStack.TryPop(out var entity))
 			{
-				var game = _gameState.Get<MinesweeperGame>(id);
+				if (entity is Avatar avatar)
+				{
+					Debug.Log($"Create: {avatar.Name}: {avatar.ID}");
 
-				GameView.Initialize(game);
-
-				GameView.OnPlayClick += GameView_OnPlayClick;
-				GameView.OnMarkClick += GameView_OnMarkClick;
-
-				_ownerWaitForEntity.TryPop(out var owner);
-
+					//var avatar = (GameEntities.Avatar)entity;
+					//var newObject = Instantiate(avatarPrefab);
+					//newObject.transform.position = new UnityEngine.Vector3(avatar.Position.x, avatar.Position.y, avatar.Position.z);
+					//_avatarGameObject.Add(entity, newObject);
+					//newObject.EntityID = avatar.Id;
+					//newObject._baseGameState = _gameState;
+					//newObject._transporter = _transporter;
+					//newObject.Health = avatar.Health;
+					//newObject.UpdateHealthBar();
+				}
 				hasUpdate = true;
 			}
 		}
+
+
+		while (_destroyStack.Count > 0)
+		{
+			if (_destroyStack.TryPop(out var entity))
+			{
+				if (entity is Avatar avatar)
+				{
+					Debug.Log($"Destroy: {avatar.Name}: {avatar.ID}");
+
+					//_avatarGameObject.TryGetValue(entity, out var value);
+					//_avatarGameObject.Remove(entity);
+					//Destroy(value.gameObject);
+				}
+				hasUpdate = true;
+			}
+		}
+
+		//if (_ownerWaitForEntity.Count > 0)
+		//{
+		//	if (_ownerWaitForEntity.TryPeek(out var id))
+		//	{
+		//		// Teoricamente isso pode ser feito logo no start
+		//		GameView.Initialize(new MinesweeperGame(10, 10));
+
+		//		GameView.OnPlayClick += GameView_OnPlayClick;
+		//		GameView.OnMarkClick += GameView_OnMarkClick;
+
+		//		_ownerWaitForEntity.TryPop(out var owner);
+
+		//		hasUpdate = true;
+		//	}
+		//}
 
 		//if (hasUpdate)
 		//{
@@ -225,12 +240,12 @@ public class Program : MonoBehaviour
 
 	private void GameView_OnMarkClick(int index)
 	{
-		_transporter.Send(new MarkMessage { GameId = _gameState.MyEntities.ElementAt(0), Index = index });
+		_transporter.Send(new MarkMessage { GameID = _gameState.MyGame.ID, Index = index });
 	}
 
 	private void GameView_OnPlayClick(int index)
 	{
-		_transporter.Send(new PlayMessage { GameId = _gameState.MyEntities.ElementAt(0), Index = index });
+		_transporter.Send(new PlayMessage { GameID = _gameState.MyGame.ID, Index = index });
 	}
 
 	private void OnDestroy()

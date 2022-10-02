@@ -15,11 +15,10 @@ namespace GameEntities.Entities
 	public class MinesweeperGame : BaseEntity
 	{
 		public sbyte[] PlayerCells { get; set; }
-		public int Columns { get; set; }
-
 
 		private readonly sbyte[] _cells;
 
+		private readonly int _columns;
 		private readonly int _rows;
 
 		private int _cellsLeft;
@@ -30,7 +29,7 @@ namespace GameEntities.Entities
 
 		public MinesweeperGame(int columns, int rows)
 		{
-			Columns = columns;
+			_columns = columns;
 			_rows = rows;
 
 			_cells = new sbyte[columns * rows];
@@ -102,7 +101,7 @@ namespace GameEntities.Entities
 			{
 				stringBuilder.Append($"{_cells[i]:+0;-0; *}, ");
 
-				if (i % Columns == Columns - 1)
+				if (i % _columns == _columns - 1)
 				{
 					stringBuilder.AppendLine();
 				}
@@ -119,7 +118,7 @@ namespace GameEntities.Entities
 			{
 				stringBuilder.Append($"{PlayerCells[i]:+0;-0; *}, ");
 
-				if (i % Columns == Columns - 1)
+				if (i % _columns == _columns - 1)
 				{
 					stringBuilder.AppendLine();
 				}
@@ -132,24 +131,24 @@ namespace GameEntities.Entities
 		{
 			var random = new Random();
 
-			var neighbourIndexes = new List<int>(firstPlayIndex);
+			var neighbourIndexes = new List<int>() { firstPlayIndex };
 			NeighnbouringCellsAction(firstPlayIndex, cellIndex => neighbourIndexes.Add(cellIndex));
 
-			var indexes = Enumerable.Range(0, Columns * _rows).Except(neighbourIndexes).OrderBy(x => random.Next()).Take(bombs);
+			var bombIndexes = Enumerable.Range(0, _columns * _rows).Except(neighbourIndexes).OrderBy(x => random.Next()).Take(bombs);
 
-			foreach (var index in indexes)
+			foreach (var index in bombIndexes)
 			{
 				_cells[index] = -1;
 				NeighnbouringCellsAction(index, cellIndex => _cells[cellIndex]++);
 			}
 
-			_cellsLeft = (Columns * _rows) - bombs;
+			_cellsLeft = (_columns * _rows) - bombs;
 		}
 
 		private void NeighnbouringCellsAction(int index, Action<int> action)
 		{
 			var freeLeft = false;
-			if (index % Columns > 0)  // left
+			if (index % _columns > 0)  // left
 			{
 				if (_cells[index - 1] != -1)
 				{
@@ -160,7 +159,7 @@ namespace GameEntities.Entities
 			}
 
 			var freeRight = false;
-			if (index % Columns < Columns - 1)  // right
+			if (index % _columns < _columns - 1)  // right
 			{
 				if (_cells[index + 1] != -1)
 				{
@@ -170,42 +169,41 @@ namespace GameEntities.Entities
 				freeRight = true;
 			}
 
-			if (index >= Columns) // up
+			if (index >= _columns) // up
 			{
-				if (_cells[index - Columns] != -1)
+				if (_cells[index - _columns] != -1)
 				{
-					action.Invoke(index - Columns);
+					action.Invoke(index - _columns);
 				}
 
-				if (freeLeft && _cells[index - Columns - 1] != -1) // upper left
+				if (freeLeft && _cells[index - _columns - 1] != -1) // upper left
 				{
-					action.Invoke(index - Columns - 1);
+					action.Invoke(index - _columns - 1);
 				}
 
-				if (freeRight && _cells[index - Columns + 1] != -1) // upper right
+				if (freeRight && _cells[index - _columns + 1] != -1) // upper right
 				{
-					action.Invoke(index - Columns + 1);
+					action.Invoke(index - _columns + 1);
 				}
 			}
 
-			if (index < (Columns * _rows) - Columns - 1)  // down
+			if (index < (_columns * _rows) - _columns - 1)  // down
 			{
-				if (_cells[index + Columns] != -1)
+				if (_cells[index + _columns] != -1)
 				{
-					action.Invoke(index + Columns);
+					action.Invoke(index + _columns);
 				}
 
-				if (freeLeft && _cells[index + Columns - 1] != -1) // bottom left
+				if (freeLeft && _cells[index + _columns - 1] != -1) // bottom left
 				{
-					action.Invoke(index + Columns - 1);
+					action.Invoke(index + _columns - 1);
 				}
 
-				if (freeRight && _cells[index + Columns + 1] != -1) // bottom right
+				if (freeRight && _cells[index + _columns + 1] != -1) // bottom right
 				{
-					action.Invoke(index + Columns + 1);
+					action.Invoke(index + _columns + 1);
 				}
 			}
 		}
 	}
-
 }

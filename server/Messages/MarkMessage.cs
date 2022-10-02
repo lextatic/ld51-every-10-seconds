@@ -12,11 +12,29 @@ namespace GameEntities.Messages
 
 		public void Execute(IBasePeer sender, BaseTransporter transporter, BaseGameState gameState, BaseEventManager eventManager)
 		{
-			eventManager.Dispatch("MarkMessage", this);
+			var serverGameState = (GameState)gameState;
 
-			// Check if peer is still owner of the game
+			if (!serverGameState.OwnerToGameMap.ContainsKey(sender))
+			{
+				Console.WriteLine("Peer doesn't have a game yet.");
+				return;
+			}
+
+			if (serverGameState.OwnerToGameMap[sender] != GameID)
+			{
+				Console.WriteLine("Invalid gameID, message is probably late.");
+				return;
+			}
 
 			var targetGame = gameState.Get<MinesweeperGame>(GameID);
+
+			if (targetGame == null)
+			{
+				Console.WriteLine("Game doesn't exist.");
+				return;
+			}
+
+			eventManager.Dispatch("MarkMessage", this);
 
 			targetGame.Mark(Index);
 
