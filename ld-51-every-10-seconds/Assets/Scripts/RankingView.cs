@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Avatar = GameEntities.Entities.Avatar;
 
@@ -6,7 +7,7 @@ public class RankingView : MonoBehaviour
 {
 	public AvatarView AvatarViewPrefab;
 
-	private readonly List<AvatarView> _avatarList = new();
+	private List<AvatarView> _avatarList = new();
 
 	public void RefreshRanking(Avatar avatar)
 	{
@@ -17,6 +18,13 @@ public class RankingView : MonoBehaviour
 				_avatarList[i].Score.text = avatar.Score.ToString();
 				break;
 			}
+		}
+
+		_avatarList = _avatarList.OrderByDescending(x => uint.Parse(x.Score.text)).ToList();
+
+		for (int i = 0; i < _avatarList.Count; i++)
+		{
+			_avatarList[i].transform.SetSiblingIndex(i);
 		}
 	}
 
