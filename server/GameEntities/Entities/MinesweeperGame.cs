@@ -81,6 +81,21 @@ namespace GameEntities.Entities
 			if (_cells[index] == -1)
 			{
 				Console.WriteLine("Game over");
+
+				for (int i = 0; i < _cells.Length; i++)
+				{
+					if (_cells[i] == -1)
+					{
+						PlayerCells[i] = -3; // missing bomb
+					}
+					else if (_cells[i] > 9 && _cells[i] <= 18)
+					{
+						PlayerCells[i] = -4; // wrong flag
+					}
+				}
+
+				PlayerCells[index] = -5; // clicked wrong bomb
+
 				OnGameOver.Invoke();
 				return;
 			}
@@ -98,6 +113,16 @@ namespace GameEntities.Entities
 			if (_cellsLeft <= 0)
 			{
 				Console.WriteLine("Victory");
+
+				for (int i = 0; i < _cells.Length; i++)
+				{
+					if (_cells[i] == -1)
+					{
+						PlayerCells[i] = -1;
+						_flagsLeft--;
+					}
+				}
+
 				OnVictory.Invoke();
 				return;
 			}
@@ -136,7 +161,7 @@ namespace GameEntities.Entities
 						{
 							Play(cellIndex);
 						}
-					});
+					}, -99);
 				}
 			}
 		}
@@ -194,12 +219,12 @@ namespace GameEntities.Entities
 			_flagsLeft = bombs;
 		}
 
-		private void NeighnbouringCellsAction(int index, Action<int> action)
+		private void NeighnbouringCellsAction(int index, Action<int> action, int ignoreCellValue = -1)
 		{
 			var freeLeft = false;
 			if (index % _columns > 0)  // left
 			{
-				if (_cells[index - 1] != -1)
+				if (_cells[index - 1] != ignoreCellValue)
 				{
 					action.Invoke(index - 1);
 				}
@@ -210,7 +235,7 @@ namespace GameEntities.Entities
 			var freeRight = false;
 			if (index % _columns < _columns - 1)  // right
 			{
-				if (_cells[index + 1] != -1)
+				if (_cells[index + 1] != ignoreCellValue)
 				{
 					action.Invoke(index + 1);
 				}
@@ -220,17 +245,17 @@ namespace GameEntities.Entities
 
 			if (index >= _columns) // up
 			{
-				if (_cells[index - _columns] != -1)
+				if (_cells[index - _columns] != ignoreCellValue)
 				{
 					action.Invoke(index - _columns);
 				}
 
-				if (freeLeft && _cells[index - _columns - 1] != -1) // upper left
+				if (freeLeft && _cells[index - _columns - 1] != ignoreCellValue) // upper left
 				{
 					action.Invoke(index - _columns - 1);
 				}
 
-				if (freeRight && _cells[index - _columns + 1] != -1) // upper right
+				if (freeRight && _cells[index - _columns + 1] != ignoreCellValue) // upper right
 				{
 					action.Invoke(index - _columns + 1);
 				}
@@ -238,17 +263,17 @@ namespace GameEntities.Entities
 
 			if (index < (_columns * _rows) - _columns - 1)  // down
 			{
-				if (_cells[index + _columns] != -1)
+				if (_cells[index + _columns] != ignoreCellValue)
 				{
 					action.Invoke(index + _columns);
 				}
 
-				if (freeLeft && _cells[index + _columns - 1] != -1) // bottom left
+				if (freeLeft && _cells[index + _columns - 1] != ignoreCellValue) // bottom left
 				{
 					action.Invoke(index + _columns - 1);
 				}
 
-				if (freeRight && _cells[index + _columns + 1] != -1) // bottom right
+				if (freeRight && _cells[index + _columns + 1] != ignoreCellValue) // bottom right
 				{
 					action.Invoke(index + _columns + 1);
 				}
