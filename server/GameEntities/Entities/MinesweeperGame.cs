@@ -87,7 +87,7 @@ namespace GameEntities.Entities
 
 			if (_cells[index] >= 9)
 			{
-				return; // flagged
+				return; // flagged or revealed
 			}
 
 			_cells[index] += 20;
@@ -105,6 +105,39 @@ namespace GameEntities.Entities
 			if (_cells[index] == 20)
 			{
 				NeighnbouringCellsAction(index, Play);
+			}
+		}
+
+		public void SmartPlay(int index)
+		{
+			if (!_initialized)
+			{
+				return;
+			}
+
+			// Only click on numbers from 1 to 7
+			var number = _cells[index];
+			if (number >= 21 && number <= 27)
+			{
+				int flagsPlaced = 0;
+				NeighnbouringCellsAction(index, cellIndex =>
+				{
+					if (_cells[cellIndex] >= 9 && _cells[cellIndex] < 19)
+					{
+						flagsPlaced++;
+					}
+				});
+
+				if (flagsPlaced + 20 == number)
+				{
+					NeighnbouringCellsAction(index, cellIndex =>
+					{
+						if (_cells[cellIndex] < 9)
+						{
+							Play(cellIndex);
+						}
+					});
+				}
 			}
 		}
 

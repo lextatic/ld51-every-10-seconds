@@ -71,6 +71,7 @@ public class Program
 			TypeManager.TypeManager.RegisterClass<RequestCreateAvatarMessage>();
 			TypeManager.TypeManager.RegisterClass<MarkMessage>();
 			TypeManager.TypeManager.RegisterClass<PlayMessage>();
+			TypeManager.TypeManager.RegisterClass<SmartPlayMessage>();
 
 			// TODO: Improve generate entity ID
 			var rand = new Random((int)DateTime.Now.Ticks);

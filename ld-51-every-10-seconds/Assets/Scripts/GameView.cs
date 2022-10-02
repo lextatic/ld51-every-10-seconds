@@ -15,6 +15,7 @@ public class GameView : MonoBehaviour
 
 	public event Action<int> OnPlayClick;
 	public event Action<int> OnMarkClick;
+	public event Action<int> OnSmartPlayClick;
 
 	public void Initialize(MinesweeperGame minesweeperGame)
 	{
@@ -29,6 +30,7 @@ public class GameView : MonoBehaviour
 
 			newCellView.OnPlayClick += CellView_OnPlayClick;
 			newCellView.OnMarkClick += CellView_OnMarkClick;
+			newCellView.OnSmartPlayClick += CellView_OnSmartPlayClick;
 
 			_cells[i] = newCellView;
 		}
@@ -66,6 +68,11 @@ public class GameView : MonoBehaviour
 	private void CellView_OnPlayClick(int index)
 	{
 		OnPlayClick.Invoke(index);
+	}
+
+	private void CellView_OnSmartPlayClick(int index)
+	{
+		OnSmartPlayClick.Invoke(index);
 	}
 
 	public void RefreshMatrixView(MinesweeperGame minesweeperGame)

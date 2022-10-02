@@ -35,6 +35,7 @@ public class Program : MonoBehaviour
 		GameView.Initialize(new MinesweeperGame(10, 10));
 		GameView.OnPlayClick += GameView_OnPlayClick;
 		GameView.OnMarkClick += GameView_OnMarkClick;
+		GameView.OnSmartPlayClick += GameView_OnSmartPlayClick;
 
 		ENet.Library.Initialize();
 
@@ -274,6 +275,11 @@ public class Program : MonoBehaviour
 	private void GameView_OnPlayClick(int index)
 	{
 		_transporter.Send(new PlayMessage { GameID = _gameState.MyGame.ID, Index = index });
+	}
+
+	private void GameView_OnSmartPlayClick(int index)
+	{
+		_transporter.Send(new SmartPlayMessage { GameID = _gameState.MyGame.ID, Index = index });
 	}
 
 	private void OnDestroy()
