@@ -11,6 +11,8 @@ public class GameView : MonoBehaviour
 	public TextMeshProUGUI Flags;
 	public TextMeshProUGUI Timer;
 
+	public GameObject Hourglass;
+
 	private CellView[] _cells;
 
 	public event Action<int> OnPlayClick;
@@ -38,8 +40,14 @@ public class GameView : MonoBehaviour
 		RefreshMatrixView(minesweeperGame);
 	}
 
+	public void ShowHourglass()
+	{
+		Hourglass.SetActive(true);
+	}
+
 	public void StartCount()
 	{
+		Hourglass.SetActive(false);
 		StartCoroutine(CountCoroutine());
 	}
 
@@ -82,20 +90,6 @@ public class GameView : MonoBehaviour
 		for (int i = 0; i < minesweeperGame.PlayerCells.Length; i++)
 		{
 			_cells[i].UpdateVisual(minesweeperGame.PlayerCells[i]);
-
-			//if (minesweeperGame.PlayerCells[i] == -2)
-			//{
-			//	_cells[i].UpdateVisual("");
-			//}
-			//else if (minesweeperGame.PlayerCells[i] == -1)
-			//{
-			//	_cells[i].UpdateVisual("flag");
-			//	flagsCount--;
-			//}
-			//else
-			//{
-			//	_cells[i].UpdateVisual(minesweeperGame.PlayerCells[i].ToString());
-			//}
 		}
 
 		Flags.text = flagsCount.ToString();

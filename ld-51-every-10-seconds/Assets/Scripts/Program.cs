@@ -19,8 +19,6 @@ public class Program : MonoBehaviour
 
 	EventManager _eventManager;
 
-	//ConcurrentStack<long> _ownerWaitForEntity = new ConcurrentStack<long>();
-
 	private readonly ConcurrentStack<BaseEntity> _createStack = new ConcurrentStack<BaseEntity>();
 
 	private readonly ConcurrentStack<BaseEntity> _destroyStack = new ConcurrentStack<BaseEntity>();
@@ -29,6 +27,7 @@ public class Program : MonoBehaviour
 
 	private bool _mainThreadRefreshGame = false;
 	private bool _mainThreadStartCount = false;
+	private bool _mainThreadGameOver = false;
 
 	private void Start()
 	{
@@ -58,21 +57,13 @@ public class Program : MonoBehaviour
 			_createStack.Push(e);
 		};
 
-		//_gameState.OnAssignOwner += (sender, e) =>
-		//{
-		//	_ownerWaitForEntity.Push(e.EntityID);
-		//};
-
 		_gameState.OnRemove += (sender, e) =>
 		{
 			_destroyStack.Push(e);
 		};
 
 		_eventManager = new EventManager();
-		//_eventManager.Subscribe<ProxyBeginAttackMessage>("ProxyBeginAttackMessage ", OnProxyBeginAttackMessage);
-		//_eventManager.Subscribe<ProxyAttackMessage>("ProxyAttackMessage", OnProxyAttackMessage);
 		_eventManager.Subscribe<GameUpdateMessage>("GameUpdateMessage ", OnGameUpdateMessage);
-		//_eventManager.Subscribe<GameUpdateMessage>("GameStateMessage ", OnGameStateMessage);
 
 		_transporter.ConnectHandle += (sender, e) =>
 		{
@@ -95,6 +86,7 @@ public class Program : MonoBehaviour
 			{
 				case GameUpdateMessage gameUpdateMessage:
 					_mainThreadRefreshGame = true;
+					_mainThreadGameOver = gameUpdateMessage.IsGameOver;
 					break;
 
 				case GameChangeMessage gameUpdateMessage:
@@ -134,51 +126,6 @@ public class Program : MonoBehaviour
 		Debug.Log("Refresh EVENT");
 	}
 
-	//private void OnGameStateMessage(GameStateMessage message)
-	//{
-	//	var game = _gameState.Get<BaseEntity>();
-	//	// already updated
-	//}
-
-	//private void OnProxyBeginAttackMessage(ProxyBeginAttackMessage message)
-	//{
-	//	var entity = _gameState.Get<BaseEntity>(message.ID);
-	//	if (_avatarGameObject.TryGetValue(entity, out var avatar))
-	//	{
-	//		avatar.IsAttack = true;
-	//	}
-	//}
-
-	//private void OnProxyAttackMessage(ProxyAttackMessage message)
-	//{
-	//	var entityOwner = _gameState.Get<BaseEntity>(message.OwnerID);
-	//	if (_avatarGameObject.TryGetValue(entityOwner, out var owner))
-	//	{
-	//		owner.IsDoHit = true;
-	//	}
-
-	//	var entityTarget = _gameState.Get<BaseEntity>(message.TargetID);
-	//	if (_avatarGameObject.TryGetValue(entityTarget, out var target))
-	//	{
-	//		target.IsTakeHit = true;
-	//		target.HitDamage = message.Damage;
-	//	}
-	//}
-
-	//void DumpGameState()
-	//{
-	//	if (_games.Count > 0)
-	//	{
-	//		foreach (var kv in _gameState.Entities)
-	//		{
-	//			if (kv.GetType() == typeof(Ball))
-	//			{
-	//				_games[(Ball)kv].ChangeColor((ConsoleColor)((Ball)kv).Color);
-	//			}
-	//		}
-	//	}
-	//}
-
 	private void Update()
 	{
 		if (_mainThreadRefreshGame)
@@ -191,6 +138,12 @@ public class Program : MonoBehaviour
 		{
 			_mainThreadStartCount = false;
 			GameView.StartCount();
+		}
+
+		if (_mainThreadGameOver)
+		{
+			_mainThreadGameOver = false;
+			GameView.ShowHourglass();
 		}
 
 		while (_scoreUpdateStack.Count > 0)

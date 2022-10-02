@@ -13,6 +13,7 @@ namespace GameEntities.Messages
 		private IBasePeer _sender;
 		private GameState _serverGameState;
 		private BaseTransporter _transporter;
+		private bool _isGameOver;
 
 		public void Execute(IBasePeer sender, BaseTransporter transporter, BaseGameState gameState, BaseEventManager eventManager)
 		{
@@ -42,6 +43,8 @@ namespace GameEntities.Messages
 
 			eventManager.Dispatch("PlayMessage", this);
 
+			_isGameOver = false;
+
 			targetGame.OnVictory = VictoryHandler;
 			targetGame.OnGameOver = GameOverHandler;
 			targetGame.SmartPlay(Index);
@@ -52,7 +55,8 @@ namespace GameEntities.Messages
 			_transporter.Send(new GameUpdateMessage
 			{
 				GameID = GameID,
-				Values = targetGame.PlayerCells
+				Values = targetGame.PlayerCells,
+				IsGameOver = _isGameOver
 			}, sender);
 
 			targetGame = null;
@@ -72,6 +76,8 @@ namespace GameEntities.Messages
 
 			var avatar = _serverGameState.Get<Avatar>(_serverGameState.EntityOwnerMap[_sender]);
 			avatar.Score += 10;
+
+			_isGameOver = true;
 
 			_transporter.Send(new AvatarUpdateMessage
 			{
@@ -100,6 +106,8 @@ namespace GameEntities.Messages
 			{
 				avatar.Score -= 10;
 			}
+
+			_isGameOver = true;
 
 			_transporter.Send(new AvatarUpdateMessage
 			{

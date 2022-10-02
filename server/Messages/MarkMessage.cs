@@ -41,7 +41,8 @@ namespace GameEntities.Messages
 			transporter.Send(new GameUpdateMessage
 			{
 				GameID = GameID,
-				Values = targetGame.PlayerCells
+				Values = targetGame.PlayerCells,
+				IsGameOver = false
 			}, sender);
 		}
 	}

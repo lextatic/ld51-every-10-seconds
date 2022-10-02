@@ -8,6 +8,7 @@ namespace GameEntities.Messages
 	{
 		public long GameID;
 		public sbyte[] Values;
+		public bool IsGameOver;
 
 		public void Execute(IBasePeer sender, BaseTransporter transporter, BaseGameState gameState, BaseEventManager eventManager)
 		{
