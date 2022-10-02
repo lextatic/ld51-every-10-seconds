@@ -17,10 +17,6 @@ namespace GameEntities.Entities
 		public sbyte[] PlayerCells { get; set; }
 		public int CellsCount => _cells.Length;
 
-		// It's being called multipletimes as events
-		public Action OnVictory;
-		public Action OnGameOver;
-
 		private readonly sbyte[] _cells;
 
 		private readonly int _columns;
@@ -69,7 +65,7 @@ namespace GameEntities.Entities
 		}
 
 
-		public void Play(int index)
+		public int Play(int index)
 		{
 			if (!_initialized)
 			{
@@ -96,13 +92,12 @@ namespace GameEntities.Entities
 
 				PlayerCells[index] = -5; // clicked wrong bomb
 
-				OnGameOver.Invoke();
-				return;
+				return -1;
 			}
 
 			if (_cells[index] >= 9)
 			{
-				return; // flagged or revealed
+				return 0; // flagged or revealed
 			}
 
 			_cells[index] += 20;
@@ -123,21 +118,22 @@ namespace GameEntities.Entities
 					}
 				}
 
-				OnVictory.Invoke();
-				return;
+				return 1;
 			}
 
 			if (_cells[index] == 20)
 			{
-				NeighnbouringCellsAction(index, Play);
+				return NeighnbouringCellsAction(index, Play);
 			}
+
+			return 0;
 		}
 
-		public void SmartPlay(int index)
+		public int SmartPlay(int index)
 		{
 			if (!_initialized)
 			{
-				return;
+				return 0;
 			}
 
 			// Only click on numbers from 1 to 7
@@ -151,19 +147,25 @@ namespace GameEntities.Entities
 					{
 						flagsPlaced++;
 					}
+
+					return 0;
 				});
 
 				if (flagsPlaced + 20 == number)
 				{
-					NeighnbouringCellsAction(index, cellIndex =>
+					return NeighnbouringCellsAction(index, cellIndex =>
 					{
 						if (_cells[cellIndex] < 9)
 						{
 							Play(cellIndex);
 						}
+
+						return 0;
 					}, -99);
 				}
 			}
+
+			return 0;
 		}
 
 		public override string ToString()
@@ -205,7 +207,11 @@ namespace GameEntities.Entities
 			var random = new Random();
 
 			var neighbourIndexes = new List<int>() { firstPlayIndex };
-			NeighnbouringCellsAction(firstPlayIndex, cellIndex => neighbourIndexes.Add(cellIndex));
+			NeighnbouringCellsAction(firstPlayIndex, cellIndex =>
+			{
+				neighbourIndexes.Add(cellIndex);
+				return 0;
+			});
 
 			var bombIndexes = Enumerable.Range(0, _columns * _rows).Except(neighbourIndexes).OrderBy(x => random.Next()).Take(bombs);
 
@@ -219,14 +225,21 @@ namespace GameEntities.Entities
 			_flagsLeft = bombs;
 		}
 
-		private void NeighnbouringCellsAction(int index, Action<int> action, int ignoreCellValue = -1)
+		private int NeighnbouringCellsAction(int index, Func<int, int> action, int ignoreCellValue = -1)
 		{
+			int result = 0;
+			int output;
+
 			var freeLeft = false;
 			if (index % _columns > 0)  // left
 			{
 				if (_cells[index - 1] != ignoreCellValue)
 				{
-					action.Invoke(index - 1);
+					output = action.Invoke(index - 1);
+					if (output != 0)
+					{
+						result = output;
+					}
 				}
 
 				freeLeft = true;
@@ -237,7 +250,11 @@ namespace GameEntities.Entities
 			{
 				if (_cells[index + 1] != ignoreCellValue)
 				{
-					action.Invoke(index + 1);
+					output = action.Invoke(index + 1);
+					if (output != 0)
+					{
+						result = output;
+					}
 				}
 
 				freeRight = true;
@@ -247,17 +264,29 @@ namespace GameEntities.Entities
 			{
 				if (_cells[index - _columns] != ignoreCellValue)
 				{
-					action.Invoke(index - _columns);
+					output = action.Invoke(index - _columns);
+					if (output != 0)
+					{
+						result = output;
+					}
 				}
 
 				if (freeLeft && _cells[index - _columns - 1] != ignoreCellValue) // upper left
 				{
-					action.Invoke(index - _columns - 1);
+					output = action.Invoke(index - _columns - 1);
+					if (output != 0)
+					{
+						result = output;
+					}
 				}
 
 				if (freeRight && _cells[index - _columns + 1] != ignoreCellValue) // upper right
 				{
-					action.Invoke(index - _columns + 1);
+					output = action.Invoke(index - _columns + 1);
+					if (output != 0)
+					{
+						result = output;
+					}
 				}
 			}
 
@@ -265,19 +294,33 @@ namespace GameEntities.Entities
 			{
 				if (_cells[index + _columns] != ignoreCellValue)
 				{
-					action.Invoke(index + _columns);
+					output = action.Invoke(index + _columns);
+					if (output != 0)
+					{
+						result = output;
+					}
 				}
 
 				if (freeLeft && _cells[index + _columns - 1] != ignoreCellValue) // bottom left
 				{
-					action.Invoke(index + _columns - 1);
+					output = action.Invoke(index + _columns - 1);
+					if (output != 0)
+					{
+						result = output;
+					}
 				}
 
 				if (freeRight && _cells[index + _columns + 1] != ignoreCellValue) // bottom right
 				{
-					action.Invoke(index + _columns + 1);
+					output = action.Invoke(index + _columns + 1);
+					if (output != 0)
+					{
+						result = output;
+					}
 				}
 			}
+
+			return result;
 		}
 	}
 }
