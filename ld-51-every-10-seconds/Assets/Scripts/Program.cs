@@ -11,6 +11,7 @@ using Avatar = GameEntities.Entities.Avatar;
 public class Program : MonoBehaviour
 {
 	public GameView GameView;
+	public RankingView RankingView;
 
 	ENetTransporterClient _transporter;
 
@@ -73,7 +74,7 @@ public class Program : MonoBehaviour
 			// Enviar nickname
 			_transporter.Send(new RequestCreateAvatarMessage
 			{
-				Name = "Lex"
+				Name = StartGame.Nickname
 			});
 		};
 
@@ -185,6 +186,8 @@ public class Program : MonoBehaviour
 				{
 					Debug.Log($"Create: {avatar.Name}: {avatar.ID}");
 
+					RankingView.AddAvatar(avatar);
+
 					//var avatar = (GameEntities.Avatar)entity;
 					//var newObject = Instantiate(avatarPrefab);
 					//newObject.transform.position = new UnityEngine.Vector3(avatar.Position.x, avatar.Position.y, avatar.Position.z);
@@ -207,6 +210,8 @@ public class Program : MonoBehaviour
 				if (entity is Avatar avatar)
 				{
 					Debug.Log($"Destroy: {avatar.Name}: {avatar.ID}");
+
+					RankingView.RemoveAvatar(avatar);
 
 					//_avatarGameObject.TryGetValue(entity, out var value);
 					//_avatarGameObject.Remove(entity);

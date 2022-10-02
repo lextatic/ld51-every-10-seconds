@@ -92,16 +92,19 @@ namespace GameEntities
 			builder.AppendLine("\nEntities Data:");
 			foreach (var kv in _entities)
 			{
-				builder.Append($"{kv.Value.GetType()} 0x{kv.Value.ID:x16} ");
+				builder.AppendLine($"{kv.Value.GetType()} 0x{kv.Value.ID:x16} ");
 
 				if (_myEntities.Count > 0)
 				{
-					builder.Append($"Owner={_myEntities.Contains(kv.Value.ID)} ");
+					builder.AppendLine($"Owner={_myEntities.Contains(kv.Value.ID)} ");
 				}
 
-				if (kv.Value.GetType() == typeof(MinesweeperGame))
+				if (kv.Value is Avatar avatar)
 				{
-					var minesweeperGame = (MinesweeperGame)kv.Value;
+					builder.AppendLine(avatar.Name);
+				}
+				else if (kv.Value is MinesweeperGame minesweeperGame)
+				{
 					builder.AppendLine(minesweeperGame.ToString());
 					builder.AppendLine("============");
 					builder.AppendLine(minesweeperGame.ToStringPlayer());
