@@ -96,7 +96,7 @@ public class GameView : MonoBehaviour
 
 		if (flagsCount <= 3)
 		{
-			Flags.color = Color.red;
+			Flags.color = Color.yellow;
 		}
 		else
 		{
