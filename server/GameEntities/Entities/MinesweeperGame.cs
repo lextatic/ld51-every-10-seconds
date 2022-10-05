@@ -290,7 +290,7 @@ namespace GameEntities.Entities
 				}
 			}
 
-			if (index < (_columns * _rows) - _columns - 1)  // down
+			if (index < (_columns * _rows) - _columns)  // down
 			{
 				if (_cells[index + _columns] != ignoreCellValue)
 				{
