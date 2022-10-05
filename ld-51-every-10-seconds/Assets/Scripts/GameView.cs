@@ -89,7 +89,7 @@ public class GameView : MonoBehaviour
 
 		for (int i = 0; i < minesweeperGame.PlayerCells.Length; i++)
 		{
-			_cells[i].UpdateVisual(minesweeperGame.PlayerCells[i]);
+			_cells[i].UpdateVisual(minesweeperGame.PlayerCells[i], ref flagsCount);
 		}
 
 		Flags.text = flagsCount.ToString();

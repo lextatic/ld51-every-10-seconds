@@ -67,7 +67,7 @@ public class CellView : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 		}
 	}
 
-	public void UpdateVisual(int newValue)
+	public void UpdateVisual(int newValue, ref int flagsCount)
 	{
 		Text.text = "";
 		Background.sprite = ClosedSprite;
@@ -101,6 +101,7 @@ public class CellView : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 			case -1:
 				// Flag
 				Flag.gameObject.SetActive(true);
+				flagsCount--;
 				break;
 
 			case 0:
