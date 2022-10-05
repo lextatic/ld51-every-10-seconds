@@ -268,7 +268,7 @@ public class Program
 				}
 			}
 
-			if (firstPeer != null)
+			if (firstPeer != null && firstGameID != previousGameID)
 			{
 				if (gameState.OwnerToGameMap.TryUpdate(firstPeer, previousGameID, firstGameID))
 				{
