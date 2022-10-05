@@ -155,12 +155,19 @@ namespace GameEntities.Entities
 				{
 					return NeighnbouringCellsAction(index, cellIndex =>
 					{
+						int result = 0;
+						int output;
+
 						if (_cells[cellIndex] < 9)
 						{
-							Play(cellIndex);
+							output = Play(cellIndex);
+							if (output != 0)
+							{
+								result = output;
+							}
 						}
 
-						return 0;
+						return result;
 					}, -99);
 				}
 			}
