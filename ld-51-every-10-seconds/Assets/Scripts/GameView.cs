@@ -19,6 +19,8 @@ public class GameView : MonoBehaviour
 	public event Action<int> OnMarkClick;
 	public event Action<int> OnSmartPlayClick;
 
+	private Coroutine _coroutine;
+
 	public void Initialize(MinesweeperGame minesweeperGame)
 	{
 		_cells = new CellView[minesweeperGame.PlayerCells.Length];
@@ -48,7 +50,11 @@ public class GameView : MonoBehaviour
 	public void StartCount()
 	{
 		Hourglass.SetActive(false);
-		StartCoroutine(CountCoroutine());
+		if (_coroutine != null)
+		{
+			StopCoroutine(_coroutine);
+		}
+		_coroutine = StartCoroutine(CountCoroutine());
 	}
 
 	private IEnumerator CountCoroutine()
@@ -66,6 +72,8 @@ public class GameView : MonoBehaviour
 
 			yield return new WaitForSeconds(1);
 		}
+
+		_coroutine = StartCoroutine(CountCoroutine());
 	}
 
 	private void CellView_OnMarkClick(int index)
