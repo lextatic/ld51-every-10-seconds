@@ -77,8 +77,7 @@ namespace WebSocketTransporter
 				KeepClean = true
 			};
 
-			_webSocketServer.SslConfiguration.ServerCertificate = X509Certificate2.CreateFromPemFile("/etc/letsencrypt/live/lextatic.com/fullchain.pem");
-			//_webSocketServer.SslConfiguration.ServerCertificate = X509Certificate2.CreateFromPemFile("/etc/letsencrypt/live/lextatic.com/privkey.pem");
+			_webSocketServer.SslConfiguration.ServerCertificate = X509Certificate2.CreateFromPemFile("/etc/letsencrypt/live/lextatic.com/cert.pem");
 
 			_webSocketServer.Log.Disable();
 
