@@ -70,7 +70,7 @@ namespace WebSocketTransporter
 
 		public WebSocketTransporterServer(IMessageSerializer serializer) : base(serializer)
 		{
-			_webSocketServer = new WebSocketServer("ws://127.0.0.1:7070");
+			_webSocketServer = new WebSocketServer("ws://localhost:7070");
 
 			_webSocketServer.WaitTime = TimeSpan.FromSeconds(30);
 			_webSocketServer.KeepClean = true;
