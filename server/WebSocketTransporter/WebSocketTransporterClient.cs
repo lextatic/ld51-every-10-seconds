@@ -12,7 +12,7 @@ namespace WebSocketTransporter
 
 		public WebSocketTransporterClient(IMessageSerializer serializer) : base(serializer)
 		{
-			_webSocket = new WebSocket("ws://127.0.0.1:7070/minesweeper");
+			_webSocket = new WebSocket("wss://lextatic.com:7070/minesweeper");
 
 			_webSocket.OnMessage += WebSocket_OnMessage;
 			_webSocket.OnOpen += WebSocket_OnOpen;

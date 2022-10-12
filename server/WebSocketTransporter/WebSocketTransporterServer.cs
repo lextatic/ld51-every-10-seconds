@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
 using WebSocketSharp;
 using WebSocketSharp.Server;
 
@@ -70,10 +71,15 @@ namespace WebSocketTransporter
 
 		public WebSocketTransporterServer(IMessageSerializer serializer) : base(serializer)
 		{
-			_webSocketServer = new WebSocketServer(7070);
+			_webSocketServer = new WebSocketServer(7070, true)
+			{
+				WaitTime = TimeSpan.FromSeconds(30),
+				KeepClean = true
+			};
 
-			_webSocketServer.WaitTime = TimeSpan.FromSeconds(30);
-			_webSocketServer.KeepClean = true;
+			//_webSocketServer.SslConfiguration.ServerCertificate = X509Certificate2.CreateFromPemFile("/etc/letsencrypt/live/lextatic.com/fullchain.pem");
+			_webSocketServer.SslConfiguration.ServerCertificate = X509Certificate2.CreateFromPemFile("/etc/letsencrypt/live/lextatic.com/privkey.pem");
+
 			_webSocketServer.Log.Disable();
 
 			_webSocketServer.AddWebSocketService<Minesweeper>("/minesweeper", () =>
