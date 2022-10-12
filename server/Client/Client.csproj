@@ -12,9 +12,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CustomSerializer\CustomSerializer.csproj" />
-    <ProjectReference Include="..\ENetTransporter\ENetTransporter.csproj" />
     <ProjectReference Include="..\GameEntities\GameEntities.csproj" />
     <ProjectReference Include="..\Messages\Messages.csproj" />
+    <ProjectReference Include="..\WebSocketTransporter\WebSocketTransporter.csproj" />
   </ItemGroup>
 
 </Project>

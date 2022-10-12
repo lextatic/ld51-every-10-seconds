@@ -1,24 +1,28 @@
 ﻿using Autofac;
 using CustomSerializer;
-using ENetTransporter;
 using GameBase;
 using GameEntities;
 using GameEntities.Messages;
 using System;
 using System.Threading;
+using WebSocketTransporter;
 
 public class Program
 {
 	static void Main(string[] args)
 	{
-		ENet.Library.Initialize();
+		//ENet.Library.Initialize();
 
 		var builder = new ContainerBuilder();
 
 		builder.RegisterType<CustomJsonSerialize>()
 			.As<IMessageSerializer>();
 
-		builder.RegisterType<ENetTransporterClient>()
+		//builder.RegisterType<ENetTransporterClient>()
+		//	.AsSelf()
+		//	.As<BaseTransporter>();
+
+		builder.RegisterType<WebSocketTransporterClient>()
 			.AsSelf()
 			.As<BaseTransporter>();
 
@@ -33,7 +37,7 @@ public class Program
 
 		using (var scope = container.BeginLifetimeScope())
 		{
-			var transporter = scope.Resolve<ENetTransporterClient>();
+			var transporter = scope.Resolve<WebSocketTransporterClient>();
 			var gameState = scope.Resolve<GameState>();
 			var eventManager = scope.Resolve<BaseEventManager>();
 
@@ -58,23 +62,25 @@ public class Program
 				});
 			};
 
-			transporter.Start(new ENetTransporterConfigure
-			{
-				Host = "localhost",
-				Port = 7070
-			});
+			//transporter.Start(new ENetTransporterConfigure
+			//{
+			//	Host = "localhost",
+			//	Port = 7070
+			//});
+
+			transporter.Connect();
 
 			SpinWait.SpinUntil(() => MenuLoop(gameState, transporter));
 
-			transporter.Stop();
+			//transporter.Stop();
 			transporter.Dispose();
 		}
 
 		Console.WriteLine("Client is closing.");
-		ENet.Library.Deinitialize();
+		//ENet.Library.Deinitialize();
 	}
 
-	static bool MenuLoop(GameState gameState, BaseTransporter transporter)
+	static bool MenuLoop(GameState gameState, WebSocketTransporterClient transporter)
 	{
 		DumpBallsState(gameState);
 
@@ -94,16 +100,11 @@ public class Program
 				Console.ResetColor();
 				transporter.Send(new PlayMessage { GameID = gameState.MyGame.ID, Index = 50 });
 				return false;
-			case ConsoleKey.D3:
-				Console.ForegroundColor = ConsoleColor.Green;
-				Console.WriteLine("Mark 99");
-				Console.ResetColor();
-				transporter.Send(new MarkMessage { GameID = gameState.MyGame.ID, Index = 99 });
-				return false;
 			case ConsoleKey.C:
 				Console.ForegroundColor = ConsoleColor.Magenta;
 				Console.WriteLine("Closing");
 				Console.ResetColor();
+				transporter.Disconnect();
 				return true;
 			default:
 				Console.ForegroundColor = ConsoleColor.Red;
@@ -119,12 +120,10 @@ public class Program
 		Console.WriteLine($"\n{gameState}");
 		Console.ResetColor();
 
-		Console.WriteLine("Pressione:");
-		WriteMenuEntry('1', "Selecionar a bola #1");
-		WriteMenuEntry('2', "Selecionar a bola #2");
-		WriteMenuEntry('3', "Selecionar a bola #3");
-		WriteMenuEntry('K', "Attack");
-		WriteMenuEntry('C', "Sair");
+		Console.WriteLine("Press:");
+		WriteMenuEntry('1', "Mark #0");
+		WriteMenuEntry('2', "Play #50");
+		WriteMenuEntry('C', "Disconnect");
 		Console.ResetColor();
 		Console.WriteLine();
 	}

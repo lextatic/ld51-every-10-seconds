@@ -1,5 +1,4 @@
 using CustomSerializer;
-using ENetTransporter;
 using GameBase;
 using GameEntities;
 using GameEntities.Entities;
@@ -13,7 +12,8 @@ public class Program : MonoBehaviour
 	public GameView GameView;
 	public RankingView RankingView;
 
-	ENetTransporterClient _transporter;
+	//ENetTransporterClient _transporter;
+	WebGlTransporterClient _transporter;
 
 	GameState _gameState;
 
@@ -36,11 +36,11 @@ public class Program : MonoBehaviour
 		GameView.OnMarkClick += GameView_OnMarkClick;
 		GameView.OnSmartPlayClick += GameView_OnSmartPlayClick;
 
-		ENet.Library.Initialize();
+		//ENet.Library.Initialize();
 
 		var serializer = new CustomJsonSerialize();
 
-		_transporter = new ENetTransporterClient(serializer);
+		_transporter = new WebGlTransporterClient(serializer);
 
 		TypeManager.TypeManager.RegisterClass<GameUpdateMessage>();
 		TypeManager.TypeManager.RegisterClass<AvatarUpdateMessage>();
@@ -116,7 +116,8 @@ public class Program : MonoBehaviour
 			}
 		};
 
-		_transporter.Start(ConfigReader.GetENetTransporterConfig());
+		_transporter.Connect();
+		//_transporter.Start(ConfigReader.GetENetTransporterConfig());
 	}
 
 	private void OnGameUpdateMessage(GameUpdateMessage message)
@@ -154,7 +155,6 @@ public class Program : MonoBehaviour
 			}
 		}
 
-		var hasUpdate = false;
 		while (_createStack.Count > 0)
 		{
 			if (_createStack.TryPop(out var entity))
@@ -175,7 +175,6 @@ public class Program : MonoBehaviour
 					//newObject.Health = avatar.Health;
 					//newObject.UpdateHealthBar();
 				}
-				hasUpdate = true;
 			}
 		}
 
@@ -194,7 +193,6 @@ public class Program : MonoBehaviour
 					//_avatarGameObject.Remove(entity);
 					//Destroy(value.gameObject);
 				}
-				hasUpdate = true;
 			}
 		}
 
@@ -237,8 +235,8 @@ public class Program : MonoBehaviour
 
 	private void OnDestroy()
 	{
-		_transporter.Stop();
+		//_transporter.Stop();
 		_transporter.Dispose();
-		ENet.Library.Deinitialize();
+		//ENet.Library.Deinitialize();
 	}
 }

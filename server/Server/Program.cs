@@ -1,6 +1,5 @@
 ﻿using Autofac;
 using CustomSerializer;
-using ENetTransporter;
 using GameBase;
 using GameEntities;
 using GameEntities.Entities;
@@ -10,6 +9,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using WebSocketTransporter;
 
 public class Program
 {
@@ -42,14 +42,18 @@ public class Program
 	{
 		var statistics = new ServerStatistics();
 
-		ENet.Library.Initialize();
+		//ENet.Library.Initialize();
 
 		var builder = new ContainerBuilder();
 
 		builder.RegisterType<CustomJsonSerialize>()
 			.As<IMessageSerializer>();
 
-		builder.RegisterType<ENetTransporterServer>()
+		//builder.RegisterType<ENetTransporterServer>()
+		//.AsSelf()
+		//.As<BaseTransporter>();
+
+		builder.RegisterType<WebSocketTransporterServer>()
 			.AsSelf()
 			.As<BaseTransporter>();
 
@@ -65,7 +69,8 @@ public class Program
 		using (var scope = container.BeginLifetimeScope())
 		{
 			var eventManager = scope.Resolve<BaseEventManager>();
-			var transporter = scope.Resolve<ENetTransporterServer>();
+			//var transporter = scope.Resolve<ENetTransporterServer>();
+			var transporter = scope.Resolve<WebSocketTransporterServer>();
 			var gameState = scope.Resolve<GameState>();
 
 			TypeManager.TypeManager.RegisterClass<RequestCreateAvatarMessage>();
@@ -164,10 +169,10 @@ public class Program
 				}
 			};
 
-			transporter.Start(new ENetTransporterConfigure
-			{
-				Port = 7070
-			});
+			//transporter.Start(new ENetTransporterConfigure
+			//{
+			//	Port = 7070
+			//});
 
 
 			MainAsync(gameState, statistics, transporter).GetAwaiter().GetResult();
@@ -175,15 +180,15 @@ public class Program
 			// not being called
 			SpinWait.SpinUntil(() => MenuLoop(gameState, statistics));
 
-			transporter.Stop();
+			//transporter.Stop();
 			transporter.Dispose();
 		}
 		Console.WriteLine("Stopping...");
 
-		ENet.Library.Deinitialize();
+		//ENet.Library.Deinitialize();
 	}
 
-	private static async Task MainAsync(GameState gameState, ServerStatistics statistics, ENetTransporterServer transporter)
+	private static async Task MainAsync(GameState gameState, ServerStatistics statistics, WebSocketTransporterServer transporter)
 	{
 		var timer = new PeriodicTimer(TimeSpan.FromSeconds(10));
 		while (await timer.WaitForNextTickAsync())
@@ -196,7 +201,7 @@ public class Program
 		}
 	}
 
-	private static void CreateNewGames(GameState gameState, ENetTransporterServer transporter)
+	private static void CreateNewGames(GameState gameState, WebSocketTransporterServer transporter)
 	{
 		var rand = new Random((int)DateTime.Now.Ticks);
 
