@@ -1,7 +1,6 @@
 ﻿using GameBase;
 using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Reflection;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
@@ -73,7 +72,7 @@ namespace WebSocketTransporter
 
 		public WebSocketTransporterServer(IMessageSerializer serializer) : base(serializer)
 		{
-			_webSocketServer = new WebSocketServer(IPAddress.Any, 7070, true)
+			_webSocketServer = new WebSocketServer(7070, true)
 			{
 				WaitTime = TimeSpan.FromSeconds(30),
 				KeepClean = true
@@ -81,7 +80,7 @@ namespace WebSocketTransporter
 
 			_webSocketServer.SslConfiguration.ServerCertificate = X509Certificate2.CreateFromPemFile("/etc/letsencrypt/live/lextatic.com/fullchain.pem", "/etc/letsencrypt/live/lextatic.com/privkey.pem");
 			_webSocketServer.SslConfiguration.ClientCertificateRequired = false;
-			_webSocketServer.SslConfiguration.EnabledSslProtocols = SslProtocols.None;
+			_webSocketServer.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls12;
 
 			_webSocketServer.Log.Disable();
 
