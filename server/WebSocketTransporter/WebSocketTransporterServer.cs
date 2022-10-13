@@ -72,7 +72,7 @@ namespace WebSocketTransporter
 
 		public WebSocketTransporterServer(IMessageSerializer serializer) : base(serializer)
 		{
-			_webSocketServer = new WebSocketServer(IPAddress.Parse("wss://lextatic.com"), 7070, true)
+			_webSocketServer = new WebSocketServer(IPAddress.Parse("150.230.84.27"), 7070, true)
 			{
 				WaitTime = TimeSpan.FromSeconds(30),
 				KeepClean = true
