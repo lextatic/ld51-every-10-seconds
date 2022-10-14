@@ -11,7 +11,7 @@ public class WebGlTransporterClient : BaseTransporter
 	public WebGlTransporterClient(IMessageSerializer serializer) : base(serializer)
 	{
 		// Create WebSocket instance
-		_webSocket = WebSocketFactory.CreateInstance("ws://127.0.0.1:7070/minesweeper");
+		_webSocket = WebSocketFactory.CreateInstance("wss://lextatic.com:7070/minesweeper");
 
 		// Add OnOpen event listener
 		_webSocket.OnOpen += () =>

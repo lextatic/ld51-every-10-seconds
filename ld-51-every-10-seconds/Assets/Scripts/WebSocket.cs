@@ -480,6 +480,8 @@ namespace HybridWebSocket
 				// Create WebSocket instance
 				this.ws = new WebSocketSharp.WebSocket(url);
 
+				this.ws.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12;
+
 				// Bind OnOpen event
 				this.ws.OnOpen += (sender, ev) =>
 				{

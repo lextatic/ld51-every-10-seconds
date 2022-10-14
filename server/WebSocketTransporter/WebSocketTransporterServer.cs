@@ -2,8 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Security.Authentication;
-using System.Security.Cryptography.X509Certificates;
 using WebSocketSharp;
 using WebSocketSharp.Server;
 
@@ -78,9 +76,11 @@ namespace WebSocketTransporter
 				KeepClean = true
 			};
 
-			_webSocketServer.SslConfiguration.ServerCertificate = X509Certificate2.CreateFromPemFile("/etc/letsencrypt/live/lextatic.com/fullchain.pem", "/etc/letsencrypt/live/lextatic.com/privkey.pem");
+#if NET5_0_OR_GREATER
+			_webSocketServer.SslConfiguration.ServerCertificate = System.Security.Cryptography.X509Certificates.X509Certificate2.CreateFromPemFile("/etc/letsencrypt/live/lextatic.com/fullchain.pem", "/etc/letsencrypt/live/lextatic.com/privkey.pem");
 			_webSocketServer.SslConfiguration.ClientCertificateRequired = false;
-			_webSocketServer.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls12;
+			_webSocketServer.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12;
+#endif
 
 			_webSocketServer.Log.Disable();
 

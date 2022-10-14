@@ -83,7 +83,7 @@ var LibraryWebSocket = {
 	 */
 	WebSocketAllocate: function(url) {
 
-		var urlStr = Pointer_stringify(url);
+		var urlStr = UTF8ToString(url);
 		var id = webSocketState.lastId++;
 
 		webSocketState.instances[id] = {
@@ -231,7 +231,7 @@ var LibraryWebSocket = {
 		if (instance.ws.readyState === 3)
 			return -5;
 
-		var reason = ( reasonPtr ? Pointer_stringify(reasonPtr) : undefined );
+		var reason = ( reasonPtr ? UTF8ToString(reasonPtr) : undefined );
 		
 		try {
 			instance.ws.close(code, reason);

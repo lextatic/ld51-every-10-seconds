@@ -14,6 +14,10 @@ namespace WebSocketTransporter
 		{
 			_webSocket = new WebSocket("wss://lextatic.com:7070/minesweeper");
 
+#if NET5_0_OR_GREATER
+			_webSocket.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12;
+#endif
+
 			_webSocket.OnMessage += WebSocket_OnMessage;
 			_webSocket.OnOpen += WebSocket_OnOpen;
 		}
